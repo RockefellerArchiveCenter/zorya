@@ -1,11 +1,4 @@
-Django==2.0.10
-mysqlclient
+Django==2.2.8
 djangorestframework
-djangorestframework-jwt
-coreapi
-django_cron
 health-check
-ArchivesSnake
-structlog
-uuid
 psycopg2-binary
