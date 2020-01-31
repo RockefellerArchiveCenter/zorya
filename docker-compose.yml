@@ -4,7 +4,7 @@ services:
   zorya-db:
     image: postgres:10.4
     volumes:
-      - dbvolume:/var/lib/postgresql/data/
+      - zoryadb:/var/lib/postgresql/data/
   zorya-web:
     build: .
     entrypoint: /code/entrypoint.sh
@@ -13,7 +13,7 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      - zorya-db
 
 volumes:
   zoryadb:
