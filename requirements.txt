@@ -1,4 +1,12 @@
+clinner==1.12.3
+colorlog==3.2.0
 Django==2.2.8
-djangorestframework
-health-check
-psycopg2-binary
+djangorestframework==3.11.0
+gitdb2==2.0.6
+GitPython==3.0.5
+health-check==3.4.1
+psycopg2-binary==2.8.4
+pytz==2019.3
+PyYAML==5.3
+smmap2==2.0.5
+sqlparse==0.3.0

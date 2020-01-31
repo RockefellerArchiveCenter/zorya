@@ -1,0 +1,12 @@
+SECRET_KEY = 'ny033+z#r)$cpjl9gnbi*v=p8rjl2(%3-f&*v(mhi4#^eur9u8'
+DEBUG = True
+ALLOWED_HOSTS = ['localhost', 'zorya-web']
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'HOST': 'zorya-db',
+        'PORT': 5432,
+    }
+}
