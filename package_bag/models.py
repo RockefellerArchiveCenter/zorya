@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractUser
 
 # Create your models here.
 
+
 class Bag(models.Model):
     original_bag_name = models.CharField(max_length=255)
     bag_identifier = models.CharField(max_length=255, unique=True)
