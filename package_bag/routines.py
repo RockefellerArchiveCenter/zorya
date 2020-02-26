@@ -27,9 +27,8 @@ class DiscoverBags(object):
         unprocessed = self.discover_bags(src)
         for u in unprocessed:
             try:
-                bag_id = unpack_rename(u, tmp)
+                bag_id = self.unpack_rename(u, tmp)
                 bag = Bag.objects.create(original_bag_name=u, bag_identifier=bag_id, bag_path=os.path.join(tmp, bag_id))
-                bag_path = self.unpack_rename(bag, extractdir)
                 self.validate_structure(bag_path)
                 self.validate_metadata(bag_path)
                 processed.append(bag)
@@ -57,25 +56,23 @@ class DiscoverBags(object):
         bag_identifier = str(uuid4())
         return bag_identifier
 
-    def validate_structure(self, bag_path):
+    def validate_structure(self, bag):
         """Validates a bag against the BagIt specification"""
-        bag = bagit.Bag(bag_path)
-        return bag.validate()
+        new_bag = bagit.Bag(bag.bag_path)
+        return new_bag.validate()
 
-    def validate_metadata(self, bag_path):
-        # takes bag path of unpacked bag
-        # opens bag_info.txt file
-        # takes schema to validate
-        # validates
+    def validate_metadata(self, bag):
+        new_bag = bagit.Bag(bag.bag_path)
+        bag_info = new_bag.info
+        # TO DO: bag schema to validate against???
         # if validation fails, bag should fail
         pass
 
     def get_data(self, arg):
-        # open bag-info.txt
-        # get origin
-        # get rights id
+        new_bag = bagit.Bag(bag_path) 
+        bag.save(origin=new_bag.info.get('origin'), rights_id=new_bag.info.get('rights_id'))
         # save origin, rights id, new bag name (i.e., UUID)
-        pass
+        # what is this returning?
 
 
 # how does something get sent from one bag to another? how does batching work?
