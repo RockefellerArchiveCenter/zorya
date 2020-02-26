@@ -4,6 +4,8 @@ from django.contrib.auth.models import AbstractUser
 
 # Create your models here.
 
+# TO DO: make fields nullable and blank
+
 
 class Bag(models.Model):
     original_bag_name = models.CharField(max_length=255)
