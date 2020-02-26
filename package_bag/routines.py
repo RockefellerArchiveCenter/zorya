@@ -1,4 +1,5 @@
 from .models import Bag
+from uuid import uuid4
 import bagit
 import os
 import tarfile
@@ -21,13 +22,13 @@ class DiscoverBags(object):
 
     def run(self):
         # TO DO: assign src variable
-        # TO DO: assign extractdir variable
+        # TO DO: assign tmp variable
         processed = []
         unprocessed = self.discover_bags(src)
         for u in unprocessed:
             try:
-                
-                bag = Bag.objects.create(original_bag_name=u, bag_path=b)
+                bag_id = unpack_rename(u, tmp)
+                bag = Bag.objects.create(original_bag_name=u, bag_identifier=bag_id, bag_path=os.path.join(tmp, bag_id))
                 bag_path = self.unpack_rename(bag, extractdir)
                 self.validate_structure(bag_path)
                 self.validate_metadata(bag_path)
@@ -53,10 +54,7 @@ class DiscoverBags(object):
         tf.extractall(tmp)
         tf.close()
         os.remove(bag_path)
-        # TO DO: generate unique ID to rename
-        
-        bag_path = os.path.join(tmp, bag_identifier)
-        # TO DO: what is this returning?
+        bag_identifier = str(uuid4())
         return bag_identifier
 
     def validate_structure(self, bag_path):
