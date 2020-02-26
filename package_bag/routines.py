@@ -29,8 +29,9 @@ class DiscoverBags(object):
             try:
                 bag_id = self.unpack_rename(u, tmp)
                 bag = Bag.objects.create(original_bag_name=u, bag_identifier=bag_id, bag_path=os.path.join(tmp, bag_id))
-                self.validate_structure(bag_path)
-                self.validate_metadata(bag_path)
+                self.validate_structure(bag.bag_path)
+                self.validate_metadata(bag.bag_path)
+                self.get_data(bag)
                 processed.append(bag)
             except Exception as e:
                 print(e)
@@ -56,20 +57,20 @@ class DiscoverBags(object):
         bag_identifier = str(uuid4())
         return bag_identifier
 
-    def validate_structure(self, bag):
+    def validate_structure(self, bag_path):
         """Validates a bag against the BagIt specification"""
-        new_bag = bagit.Bag(bag.bag_path)
+        new_bag = bagit.Bag(bag_path)
         return new_bag.validate()
 
-    def validate_metadata(self, bag):
-        new_bag = bagit.Bag(bag.bag_path)
+    def validate_metadata(self, bag_path):
+        new_bag = bagit.Bag(bag_path)
         bag_info = new_bag.info
         # TO DO: bag schema to validate against???
         # if validation fails, bag should fail
         pass
 
-    def get_data(self, arg):
-        new_bag = bagit.Bag(bag_path) 
+    def get_data(self, bag):
+        new_bag = bagit.Bag(bag.bag_path) 
         bag.save(origin=new_bag.info.get('origin'), rights_id=new_bag.info.get('rights_id'))
         # save origin, rights id, new bag name (i.e., UUID)
         # what is this returning?
