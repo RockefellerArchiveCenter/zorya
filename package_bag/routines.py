@@ -3,68 +3,74 @@ import bagit
 import os
 import tarfile
 
+# TO DO: import settings file (directories)
+
+# original_bag_name = models.CharField(max_length=255)
+# bag_identifier = models.CharField(max_length=255, unique=True)
+# bag_path = models.CharField(max_length=255, null=True, blank=True)
+# origin = models.CharField(max_length=20, choices=ORIGIN_CHOICES)
+# rights_id = models.CharField(max_length=255)
+# created = models.DateTimeField(auto_now=True)
+# last_modified = models.DateTimeField(auto_now_add=True)
+
 
 class DiscoverBags(object):
-    # Look into what's going on in Fornax and Aurora for bag validation - will
-    # need import bagit library
     """
     Validates bag structure and bag info file, renames bag with unique ID
     """
 
-    def discover_bags(self, arg):
-        # get source directory
-        # get list of directories
-        # check if tar.gz?
-        # return list
-        pass
+    def run(self):
+        # TO DO: assign src variable
+        # TO DO: assign extractdir variable
+        processed = []
+        unprocessed = self.discover_bags(src)
+        for u in unprocessed:
+            try:
+                
+                bag = Bag.objects.create(original_bag_name=u, bag_path=b)
+                bag_path = self.unpack_rename(bag, extractdir)
+                self.validate_structure(bag_path)
+                self.validate_metadata(bag_path)
+                processed.append(bag)
+            except Exception as e:
+                print(e)
+                # since nothing's been saved in the database yet, where do logs go? - there are lots of different ways to do logging in django
+                # what does this process bags function return? - you want to
+                # return something out of the view that indicates which objects
+                # were processed
+        return processed
 
-    def unpack_rename(self, bag, extract_dir):
-        ext = os.path.splitext(bag.bag_path)[-1]
-        if ext in ['.tgz', '.tar.gz', '.gz']:
-            tf = tarfile.open(bag.bag_path, 'r')
-            tf.extractall(extract_dir)
-            tf.close()
-            os.remove(bag.bag_path)
-            # TODO: generate unique ID to rename
-            bag.bag_path = os.path.join(extract_dir, bag.bag_identifier)
-            bag.save()
-            # TODO: what is this returning?
-        else:
-            raise Exception("Unrecognized archive format")
-        pass
+    def discover_bags(self, src):
+        bags_list = []
+        for d in os.listdir(src):
+            ext = os.path.splitext(d)[-1]
+            if ext in ['.tgz', '.tar.gz', '.gz']:
+                bags_list.append(os.path.join(src, d))
+        return bags_list
+
+    def unpack_rename(self, bag_path, tmp):
+        tf = tarfile.open(bag_path, 'r')
+        tf.extractall(tmp)
+        tf.close()
+        os.remove(bag_path)
+        # TO DO: generate unique ID to rename
+        
+        bag_path = os.path.join(tmp, bag_identifier)
+        # TO DO: what is this returning?
+        return bag_identifier
 
     def validate_structure(self, bag_path):
         """Validates a bag against the BagIt specification"""
-        # gets one bag
         bag = bagit.Bag(bag_path)
         return bag.validate()
 
-    def validate_metadata(self, bag_info):
+    def validate_metadata(self, bag_path):
         # takes bag path of unpacked bag
         # opens bag_info.txt file
         # takes schema to validate
         # validates
         # if validation fails, bag should fail
         pass
-
-    def process_bags(self):
-        processed = []
-        new_bags = self.discover_bags(bags)
-        for bag in new_bags:
-            try:
-                unpacked = self.unpack_rename(bag)
-                validated = self.validate
-                # create bag object
-                process.append(validated)
-                # parse data
-                # save to database
-            except Exception:
-                # do something with error
-                # return processed
-                # since nothing's been saved in the database yet, where do logs go? - there are lots of different ways to do logging in django
-                # what does this process bags function return? - you want to
-                # return something out of the view that indicates which objects
-                # were processed
 
     def get_data(self, arg):
         # open bag-info.txt
@@ -78,7 +84,9 @@ class DiscoverBags(object):
 class GetRights(object):
     """Send rights ID to external service and receive JSON in return"""
 
-# QUESTION: where does rights approval happen? will things be in limbo, or does there need to be a way to view rights here? Do things get delivered elsewhere instead?
+# QUESTION: where does rights approval happen? will things be in limbo, or
+# does there need to be a way to view rights here? Do things get delivered
+# elsewhere instead?
     def get_rights(self, arg):
         # url for post request
         # get id from database
