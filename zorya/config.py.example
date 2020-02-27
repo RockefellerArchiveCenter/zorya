@@ -10,3 +10,8 @@ DATABASES = {
         'PORT': 5432,
     }
 }
+
+BASE_DIR = ''
+SRC_DIR = '{}/src'.format(BASE_DIR)
+TMP_DIR = '{}/tmp'.format(BASE_DIR)
+DEST_DIR = '{}/dest'.format(BASE_DIR)

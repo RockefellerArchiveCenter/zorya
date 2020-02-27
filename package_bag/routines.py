@@ -5,6 +5,7 @@ import os
 import tarfile
 
 # TO DO: import settings file (directories)
+from zorya import settings
 
 # original_bag_name = models.CharField(max_length=255)
 # bag_identifier = models.CharField(max_length=255, unique=True)
@@ -24,11 +25,11 @@ class DiscoverBags(object):
         # TO DO: assign src variable
         # TO DO: assign tmp variable
         processed = []
-        unprocessed = self.discover_bags(src)
+        unprocessed = self.discover_bags(settings.SRC_DIR)
         for u in unprocessed:
             try:
-                bag_id = self.unpack_rename(u, tmp)
-                bag = Bag.objects.create(original_bag_name=u, bag_identifier=bag_id, bag_path=os.path.join(tmp, bag_id))
+                bag_id = self.unpack_rename(u, settings.TMP_DIR)
+                bag = Bag.objects.create(original_bag_name=u, bag_identifier=bag_id, bag_path=os.path.join(settings.TMP_DIR, bag_id))
                 self.validate_structure(bag.bag_path)
                 self.validate_metadata(bag.bag_path)
                 self.get_data(bag)
@@ -79,6 +80,9 @@ class DiscoverBags(object):
 # how does something get sent from one bag to another? how does batching work?
 class GetRights(object):
     """Send rights ID to external service and receive JSON in return"""
+    
+    def run(self):
+        pass
 
 # QUESTION: where does rights approval happen? will things be in limbo, or
 # does there need to be a way to view rights here? Do things get delivered
