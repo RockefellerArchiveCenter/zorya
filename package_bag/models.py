@@ -13,7 +13,11 @@ class Bag(models.Model):
         ('legacy_digital', 'Legacy Digital Processing'),
         ('digitization', 'Digitization')
     )
-    origin = models.CharField(max_length=20, choices=ORIGIN_CHOICES, null=True, blank=True)
+    origin = models.CharField(
+        max_length=20,
+        choices=ORIGIN_CHOICES,
+        null=True,
+        blank=True)
     rights_id = models.CharField(max_length=255, null=True, blank=True)
     # rights_data = JSONField(null=True, blank=True)
     created = models.DateTimeField(auto_now=True)
