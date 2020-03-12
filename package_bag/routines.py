@@ -29,7 +29,12 @@ class DiscoverBags(object):
         for u in unprocessed:
             try:
                 bag_id = self.unpack_rename(u, settings.TMP_DIR)
-                bag = Bag.objects.create(original_bag_name=u, bag_identifier=bag_id, bag_path=os.path.join(settings.TMP_DIR, bag_id))
+                bag = Bag.objects.create(
+                    original_bag_name=u,
+                    bag_identifier=bag_id,
+                    bag_path=os.path.join(
+                        settings.TMP_DIR,
+                        bag_id))
                 self.validate_structure(bag.bag_path)
                 self.validate_metadata(bag.bag_path)
                 self.get_data(bag)
@@ -71,51 +76,94 @@ class DiscoverBags(object):
         pass
 
     def get_data(self, bag):
-        new_bag = bagit.Bag(bag.bag_path) 
-        bag.save(origin=new_bag.info.get('origin'), rights_id=new_bag.info.get('rights_id'))
+        new_bag = bagit.Bag(bag.bag_path)
+        # TO DO: add end date
+        bag.save(
+            origin=new_bag.info.get('origin'),
+            rights_id=new_bag.info.get('rights_id'))
         # save origin, rights id, new bag name (i.e., UUID)
         # what is this returning?
 
 
 # how does something get sent from one bag to another? how does batching work?
 class GetRights(object):
-    """Send rights ID to external service and receive JSON in return"""
-    
-    def run(self):
-        pass
+    """Send rights IDs to external service and receive JSON in return"""
 
-# QUESTION: where does rights approval happen? will things be in limbo, or
-# does there need to be a way to view rights here? Do things get delivered
-# elsewhere instead?
-    def get_rights(self, arg):
-        # url for post request
-        # get id from database
-        # send post request
+    def run(self):
+        url = "rights service url"
+        has_rights = []
+        no_rights = Bag.objects.filter(something)
+        for r in no_rights:
+            try:
+                retrieve_rights(r, url)
+                # save_rights(r)
+            except Exception as e:
+                print(e)
+        # get rights ids from database
+        # loop through rights ids
+        # retrieve rights
+        # save rights
+        return has_rights
+
+    def retrieve_rights(self, bag, url, apikey):
+        # url for get request
+        resp = requests.post(
+            url,
+            data= "data", # TO DO: what data is sent to rights service? obviously includes rights ids
+            headers={
+                "Content-Type": "application/json",
+                "apikey": apikey,
+            },
+        )
+        # send get request
         # get serialized rights back as json
-        # save json...to file?
-        pass
+        # return json
+        return resp
+
+    # def save_rights(self, bag):
+    #     # do we want to validate rights schema here?
+    #     # save json...to file? rights.json?
+    #     # return saved file?
+    #     pass
 
 
 class CreatePackage(object):
     """Create JSON according to Ursa Major schema and package with bag"""
 
-    def create_json(self, arg):
-        # get json for rights (this is already a file?)
-        # if no json exists, create json (makes extensible)
+    def run(self):
+        packaged = []
+        unpackaged = Bag.objects.filter(something)
+        for u in unpackaged:
+            try:
+                create_json(u)
+            except Exception as e:
+                print(e)
+        pass
+
+    def create_json(self, bag):
+        # create json that conforms to digitization_bag or legacy_digital_bag in ursa major schema
+        # check if there is json for rights file - for now assume it's rights.json
+        # create json (makes extensible)
         # from database, add origin to json
         # from database, add bag uuid to json
         # combine everything as one json, save somewhere
         pass
 
-    def package_bag(self, arg):
+    def add_rights(self, arg):
+        # add rights from rights.json
+        # delete rights.json
         pass
 
-    def create_package(self, arg):
+    def package_bag(self, arg):
+        #
         pass
 
 
 class DeliverPackage(object):
     """Deliver package to Ursa Major"""
+
+    def run(self, arg):
+        pass
 
     def send_data(self, arg):
         pass
