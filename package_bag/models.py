@@ -19,6 +19,7 @@ class Bag(models.Model):
         null=True,
         blank=True)
     rights_id = models.CharField(max_length=255, null=True, blank=True)
+    end_date = models.CharField(max_length=255, null=True, blank=True) # to be posted to rights service
     # rights_data = JSONField(null=True, blank=True)
     created = models.DateTimeField(auto_now=True)
     last_modified = models.DateTimeField(auto_now_add=True)
