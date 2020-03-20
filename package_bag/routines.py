@@ -1,5 +1,8 @@
 from .models import Bag
+from package_bag.serializers import RightsInfoSerializer, BagSerializer
+
 from uuid import uuid4
+from shutil import move
 import bagit
 import os
 import tarfile
@@ -16,11 +19,12 @@ from zorya import settings
 # last_modified = models.DateTimeField(auto_now_add=True)
 
 
+
 class DiscoverBags(object):
     """
     Validates bag structure and bag info file, renames bag with unique ID
     """
-
+    
     def run(self):
         # TO DO: assign src variable
         # TO DO: assign tmp variable
@@ -46,7 +50,7 @@ class DiscoverBags(object):
                 # return something out of the view that indicates which objects
                 # were processed
         return processed
-
+    
     def discover_bags(self, src):
         bags_list = []
         for d in os.listdir(src):
@@ -54,7 +58,7 @@ class DiscoverBags(object):
             if ext in ['.tgz', '.tar.gz', '.gz']:
                 bags_list.append(os.path.join(src, d))
         return bags_list
-
+    
     def unpack_rename(self, bag_path, tmp):
         tf = tarfile.open(bag_path, 'r')
         tf.extractall(tmp)
@@ -62,33 +66,32 @@ class DiscoverBags(object):
         os.remove(bag_path)
         bag_identifier = str(uuid4())
         return bag_identifier
-
+    
     def validate_structure(self, bag_path):
         """Validates a bag against the BagIt specification"""
         new_bag = bagit.Bag(bag_path)
         return new_bag.validate()
-
+    
     def validate_metadata(self, bag_path):
         new_bag = bagit.Bag(bag_path)
         bag_info = new_bag.info
         # TO DO: bag schema to validate against???
         # if validation fails, bag should fail
         pass
-
+    
     def get_data(self, bag):
         new_bag = bagit.Bag(bag.bag_path)
-        # TO DO: add end date
         bag.save(
             origin=new_bag.info.get('origin'),
-            rights_id=new_bag.info.get('rights_id'))
-        # save origin, rights id, new bag name (i.e., UUID)
-        # what is this returning?
+            rights_id=new_bag.info.get('rights_id'),
+            end_date=new_bag.info.get('end_date')) # TO DO: does field need to be renamed?
+        # TO DO: what is this returning?
 
 
 # how does something get sent from one bag to another? how does batching work?
 class GetRights(object):
     """Send rights IDs to external service and receive JSON in return"""
-
+    
     def run(self):
         url = "rights service url"
         has_rights = []
@@ -104,7 +107,7 @@ class GetRights(object):
         # retrieve rights
         # save rights
         return has_rights
-
+    
     def retrieve_rights(self, bag, url, apikey):
         # url for get request
         resp = requests.post(
@@ -117,9 +120,9 @@ class GetRights(object):
         )
         # send get request
         # get serialized rights back as json
-        # return json
-        return resp
-
+        # return saved json
+        return rights_json
+    
     # def save_rights(self, bag):
     #     # do we want to validate rights schema here?
     #     # save json...to file? rights.json?
@@ -129,7 +132,7 @@ class GetRights(object):
 
 class CreatePackage(object):
     """Create JSON according to Ursa Major schema and package with bag"""
-
+    
     def run(self):
         packaged = []
         unpackaged = Bag.objects.filter(something)
@@ -138,8 +141,8 @@ class CreatePackage(object):
                 create_json(u)
             except Exception as e:
                 print(e)
-        pass
-
+        return packaged
+    
     def create_json(self, bag):
         # create json that conforms to digitization_bag or legacy_digital_bag in ursa major schema
         # check if there is json for rights file - for now assume it's rights.json
@@ -147,26 +150,78 @@ class CreatePackage(object):
         # from database, add origin to json
         # from database, add bag uuid to json
         # combine everything as one json, save somewhere
+        # return json file
         pass
-
+    
     def add_rights(self, arg):
         # add rights from rights.json
         # delete rights.json
+        # return json file
         pass
-
-    def package_bag(self, arg):
-        #
+        
+    
+    def package_bag(self, storage_root_dir, bag):
+        tar_filename = "{}.tar.gz".format(bag.bag_identifier)
+        with tarfile.open(join(storage_root_dir, tar_filename), "w:gz") as tar:
+            tar.add(join(storage_root_dir, bag.bag_identifier), arcname=os.path.basename(join(storage_root_dir, bag.bag_identifier)))
+        FH.make_tarfile(
+            join(storage_root_dir, tar_filename),
+            join(storage_root_dir, bag.bag_identifier),
+        )
+        mkdir(
+            join(delivery_queue_dir, bag.bag_identifier)
+        )
+        
+        move(
+            join(storage_root_dir, tar_filename),
+            join(
+                delivery_queue_dir,
+                bag.bag_identifier,
+                tar_filename,
+            ),
+        )
+        
+        archive_json = ArchivesSerializer(
+            archive, context={"request": None}
+        ).data
+        with open(
+            join(
+                delivery_queue_dir,
+                bag.bag_identifier,
+                "{}.json".format(bag.bag_identifier),
+            ),
+            "wb",
+        ) as f:
+            json.dump(archive_json, f, indent=4, sort_keys=True, default=str)
+        
+        FH.make_tarfile(
+            join(
+                delivery_queue_dir,
+                "{}.tar.gz".format(bag.bag_identifier),
+            ),
+            join(delivery_queue_dir, bag.bag_identifier),
+        )
+        
+        FH.remove_file_or_dir(
+            join(delivery_queue_dir, bag.bag_identifier)
+        )
+        
+        archive.process_status = Archives.DELIVERED
+        print(bag.bag_identifier)
+        archive.save()
         pass
 
 
 class DeliverPackage(object):
     """Deliver package to Ursa Major"""
-
+    
+    # use package serializer here
+    
     def run(self, arg):
         pass
-
+    
     def send_data(self, arg):
         pass
-
+    
     def send_package(self, arg):
         pass
