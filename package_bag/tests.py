@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from .routines import DiscoverBags
+from .routines import DiscoverBags, GetRights, CreatePackage, DeliverPackage
 
 # Create your tests here.
 
