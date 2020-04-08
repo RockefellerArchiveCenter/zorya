@@ -2,9 +2,6 @@ from rest_framework import serializers
 
 from .models import Bag
 
-# QUESTION: should I use HyperlinkedModelSerializer instead?
-
-
 
 class BagSerializer(serializers.ModelSerializer):
     """docstring for BagSerializer"""
