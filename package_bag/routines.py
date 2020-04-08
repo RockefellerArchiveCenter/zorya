@@ -6,6 +6,7 @@ from shutil import move
 import bagit
 import os
 import tarfile
+import json
 
 # TO DO: import settings file (directories)
 from zorya import settings
@@ -144,6 +145,18 @@ class CreatePackage(object):
         return packaged
 
     def create_json(self, bag):
+        bag_json = BagSerializer(
+            bag
+        ).data
+        with open(
+            join(
+                delivery_queue_dir,
+                bag.bag_identifier,
+                "{}.json".format(bag.bag_identifier),
+            ),
+            "wb",
+        ) as f:
+            json.dump(bag_json, f, indent=4, sort_keys=True, default=str)
         # create json that conforms to digitization_bag or legacy_digital_bag in ursa major schema
         # check if there is json for rights file - for now assume it's rights.json
         # create json (makes extensible)
@@ -159,7 +172,8 @@ class CreatePackage(object):
         # return json file
         pass
 
-    def package_bag(self, storage_root_dir, bag):
+
+    def package_bag(self, storage_root_dir, delivery_queue_dir, bag):
         tar_filename = "{}.tar.gz".format(bag.bag_identifier)
         with tarfile.open(join(storage_root_dir, tar_filename), "w:gz") as tar:
             tar.add(
@@ -170,10 +184,6 @@ class CreatePackage(object):
                     join(
                         storage_root_dir,
                         bag.bag_identifier)))
-        FH.make_tarfile(
-            join(storage_root_dir, tar_filename),
-            join(storage_root_dir, bag.bag_identifier),
-        )
         mkdir(
             join(delivery_queue_dir, bag.bag_identifier)
         )
@@ -187,35 +197,14 @@ class CreatePackage(object):
             ),
         )
 
-        archive_json = ArchivesSerializer(
-            archive, context={"request": None}
-        ).data
-        with open(
-            join(
-                delivery_queue_dir,
-                bag.bag_identifier,
-                "{}.json".format(bag.bag_identifier),
-            ),
-            "wb",
-        ) as f:
-            json.dump(archive_json, f, indent=4, sort_keys=True, default=str)
-
-        FH.make_tarfile(
-            join(
+        
+        
+        with tarfile.open(join(
                 delivery_queue_dir,
                 "{}.tar.gz".format(bag.bag_identifier),
-            ),
-            join(delivery_queue_dir, bag.bag_identifier),
-        )
+            ), "w:gz") as tar:
+            tar.add(join(delivery_queue_dir, bag.bag_identifier), arcname=os.path.basename(join(delivery_queue_dir, bag.bag_identifier)))
 
-        FH.remove_file_or_dir(
-            join(delivery_queue_dir, bag.bag_identifier)
-        )
-
-        archive.process_status = Archives.DELIVERED
-        print(bag.bag_identifier)
-        archive.save()
-        pass
 
 
 class DeliverPackage(object):
