@@ -1,5 +1,5 @@
 from .models import Bag
-from package_bag.serializers import RightsInfoSerializer, BagSerializer
+from package_bag.serializers import BagSerializer
 
 from uuid import uuid4
 from shutil import move
@@ -136,7 +136,7 @@ class CreatePackage(object):
 
     def run(self):
         packaged = []
-        unpackaged = Bag.objects.filter(something)
+        unpackaged = Bag.objects.all() #Bag.objects.filter(something)
         for u in unpackaged:
             try:
                 create_json(u)
