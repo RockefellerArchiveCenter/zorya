@@ -1,3 +1,7 @@
+import shutil
+from os import listdir, makedirs
+from os.path import isdir, join
+
 from django.test import TestCase
 
 from .routines import DiscoverBags, GetRights, CreatePackage, DeliverPackage
@@ -6,14 +10,22 @@ from zorya import settings
 
 # Create your tests here.
 
+bag_fixture_dir = join(settings.BASE_DIR, 'fixtures', 'bags')
 
 class TestPackage(TestCase):
     """docstring for TestPackage"""
 
     def setUp(self):
-        self.src_dir = settings.TEST_SRC_DIR
-        self.tmp_dir = settings.TEST_TMP_DIR
-        self.dest_dir = settings.TEST_DEST_DIR
+        self.src_dir = settings.SRC_DIR
+        self.tmp_dir = settings.TMP_DIR
+        self.dest_dir = settings.DEST_DIR
+        for d in [self.src_dir, self.tmp_dir, self.dest_dir]:
+            if isdir(d):
+                shutil.rmtree(d)
+        shutil.copytree(bag_fixture_dir, self.src_dir)
+        for dir in [self.dest_dir, self.tmp_dir]:
+            makedirs(dir)
+        # self.create_objects()
         # move fixtures into watched dir
 
     def test_discover_bags(self):
