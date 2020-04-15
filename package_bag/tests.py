@@ -1,5 +1,5 @@
 import shutil
-from os import listdir, makedirs
+from os import listdir, makedirs, getcwd
 from os.path import isdir, join
 
 from django.test import TestCase

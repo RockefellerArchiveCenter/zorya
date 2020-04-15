@@ -60,11 +60,13 @@ class DiscoverBags(object):
         return bags_list
 
     def unpack_rename(self, bag_path, tmp):
+        bag_identifier = str(uuid4())
         tf = tarfile.open(bag_path, 'r')
         tf.extractall(tmp)
+        original_bag_name = tf.getnames()[0]
         tf.close()
+        os.rename(os.path.join(tmp, original_bag_name), os.path.join(tmp, bag_identifier))
         os.remove(bag_path)
-        bag_identifier = str(uuid4())
         return bag_identifier
 
     def validate_structure(self, bag_path):
@@ -73,6 +75,7 @@ class DiscoverBags(object):
         return new_bag.validate()
 
     def validate_metadata(self, bag_path):
+        print("validating metadata")
         new_bag = bagit.Bag(bag_path)
         bag_info = new_bag.info
         # TO DO: bag schema to validate against???
@@ -80,6 +83,7 @@ class DiscoverBags(object):
         pass
 
     def get_data(self, bag):
+        print("get data about bag")
         new_bag = bagit.Bag(bag.bag_path)
         bag.save(
             origin=new_bag.info.get('origin'),
