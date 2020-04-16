@@ -75,20 +75,17 @@ class DiscoverBags(object):
         return new_bag.validate()
 
     def validate_metadata(self, bag_path):
-        print("validating metadata")
         new_bag = bagit.Bag(bag_path)
         bag_info = new_bag.info
         # TO DO: bag schema to validate against???
         # if validation fails, bag should fail
-        pass
 
     def get_data(self, bag):
-        print("get data about bag")
         new_bag = bagit.Bag(bag.bag_path)
-        bag.save(
-            origin=new_bag.info.get('origin'),
-            rights_id=new_bag.info.get('rights_id'),
-            end_date=new_bag.info.get('end_date'))  # TO DO: does field need to be renamed?
+        bag.origin=new_bag.info.get('Origin')
+        bag.rights_id=new_bag.info.get('Rights-ID')
+        bag.end_date = new_bag.info.get('End-Date')
+        bag.save()
         # TO DO: what is this returning?
 
 
