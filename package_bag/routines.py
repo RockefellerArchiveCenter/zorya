@@ -4,6 +4,7 @@ from package_bag.serializers import BagSerializer
 from uuid import uuid4
 from shutil import move
 import bagit
+import bagit_profile
 import os
 import tarfile
 import json
