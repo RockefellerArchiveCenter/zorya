@@ -76,10 +76,17 @@ class DiscoverBags(object):
         return new_bag.validate()
 
     def validate_metadata(self, bag_path):
+        # TO DO: first vlaidation that "BagIt-Profile-Identifier" exists
         new_bag = bagit.Bag(bag_path)
         bag_info = new_bag.info
-        # TO DO: bag schema to validate against???
-        # if validation fails, bag should fail
+        if "BagIt-Profile-Identifier" not in bag_info:
+            print("no bagit profile identifier")
+            # TO DO: return exception
+        else:
+            profile = bagit_profile.Profile(new_bag.info.get("BagIt-Profile-Identifier"))
+            # TO DO: exception if cannot retrieve profile
+            return profile.validate_bag_info(new_bag)
+            # TO DO: exception if validation does not work
 
     def get_data(self, bag):
         new_bag = bagit.Bag(bag.bag_path)
