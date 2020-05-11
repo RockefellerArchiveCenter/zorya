@@ -1,6 +1,7 @@
 # from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.contrib.postgres.fields import JSONField
 
 # TO DO: make fields nullable and blank
 
@@ -23,7 +24,7 @@ class Bag(models.Model):
         max_length=255,
         null=True,
         blank=True)  # to be posted to rights service
-    # rights_data = JSONField(null=True, blank=True)
+    rights_data = JSONField(null=True, blank=True)
     created = models.DateTimeField(auto_now=True)
     last_modified = models.DateTimeField(auto_now_add=True)
 
