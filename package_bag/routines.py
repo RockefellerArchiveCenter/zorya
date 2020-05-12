@@ -10,15 +10,8 @@ import tarfile
 import json
 
 # TO DO: import settings file (directories)
+# api key for rights service?
 from zorya import settings
-
-# original_bag_name = models.CharField(max_length=255)
-# bag_identifier = models.CharField(max_length=255, unique=True)
-# bag_path = models.CharField(max_length=255, null=True, blank=True)
-# origin = models.CharField(max_length=20, choices=ORIGIN_CHOICES)
-# rights_id = models.CharField(max_length=255)
-# created = models.DateTimeField(auto_now=True)
-# last_modified = models.DateTimeField(auto_now_add=True)
 
 
 class DiscoverBags(object):
@@ -89,6 +82,7 @@ class DiscoverBags(object):
             # TO DO: exception if validation does not work
 
     def get_data(self, bag):
+        print('getting some data')
         new_bag = bagit.Bag(bag.bag_path)
         bag.origin=new_bag.info.get('Origin')
         bag.rights_id=new_bag.info.get('Rights-ID')
@@ -103,12 +97,15 @@ class GetRights(object):
 
     def run(self):
         url = "rights service url"
+        apikey = "rights service apikey"
         has_rights = []
-        no_rights = Bag.objects.filter(something)
-        for r in no_rights:
+        print("getting list of bags")
+        print(Bag.objects)
+        for bag in Bag.objects.filter(rights_data__isnull=True):
             try:
-                retrieve_rights(r, url)
-                # save_rights(r)
+                print("no rights")
+                rights_json = self.retrieve_rights(bag, url, apikey)
+                self.save_rights(bag, rights_json)
             except Exception as e:
                 print(e)
         # get rights ids from database
@@ -133,11 +130,15 @@ class GetRights(object):
         # return saved json
         return rights_json
 
-    # def save_rights(self, bag):
-    #     # do we want to validate rights schema here?
-    #     # save json...to file? rights.json?
-    #     # return saved file?
-    #     pass
+    def save_rights(self, bag, rights_json):
+        print('assigning bag rights data')
+        # do we want to validate rights schema here?
+        bag.rights_data=rights_json
+        print(bag.rights_data)
+        print('saving bag rights data')
+        bag.save()
+        # save json...to file? rights.json?
+        pass
 
 
 class CreatePackage(object):

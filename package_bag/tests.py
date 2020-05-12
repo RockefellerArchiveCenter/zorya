@@ -1,4 +1,7 @@
 import shutil
+import json
+
+from unittest.mock import patch
 from os import listdir, makedirs, getcwd
 from os.path import isdir, join
 
@@ -11,6 +14,7 @@ from zorya import settings
 # Create your tests here.
 
 bag_fixture_dir = join(settings.BASE_DIR, 'fixtures', 'bags')
+rights_fixture_dir = join(settings.BASE_DIR, 'fixtures', 'rights')
 
 class TestPackage(TestCase):
     """docstring for TestPackage"""
@@ -25,25 +29,34 @@ class TestPackage(TestCase):
         shutil.copytree(bag_fixture_dir, self.src_dir)
         for dir in [self.dest_dir, self.tmp_dir]:
             makedirs(dir)
+            # TO DO: copy fixture rights to where they need to go
+        self.discover_bags()
         # self.create_objects()
         # move fixtures into watched dir
 
-    def test_discover_bags(self):
+    def discover_bags(self):
         discover = DiscoverBags().run()
         self.assertIsNot(False, discover)
         # make sure the right number of objects were processed
         # make sure that invalid bags were invalidated
+        
+    # TEST: CAN SAVE RIGHTS
+    # mock retrieve_rights method
 
-    # def test_get_rights(self):
-    #     """docstring for fname"""
-    #     get_rights = GetRights().run()
-    #     self.assertIsNot(False, get_rights)
-    #
+    @patch('package_bag.routines.GetRights.retrieve_rights')
+    def test_get_rights(self, mocked_rights):
+        """docstring for fname"""
+        with open(join(rights_fixture_dir, '1.json')) as json_file:
+            rights_json = json.load(json_file)
+        print(rights_json)
+        get_rights = GetRights().run()
+        self.assertIsNot(False, get_rights)
+
     # def test_create_package(self):
     #     """docstring for test_create_package"""
     #     create_package = CreatePackage().run()
     #     self.assertIsNot(False, create_package)
-    #
+
     # def test_deliver_package(self):
     #     """docstring for test_deliver_package"""
     #     deliver_package = DeliverPackage().run()
