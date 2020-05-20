@@ -100,7 +100,6 @@ class GetRights(object):
         has_rights = []
         for bag in Bag.objects.filter(rights_data__isnull=True):
             try:
-                print("no rights")
                 rights_json = self.retrieve_rights(bag, url, apikey)
                 self.save_rights(bag, rights_json)
             except Exception as e:
