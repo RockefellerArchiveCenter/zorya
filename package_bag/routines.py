@@ -165,13 +165,6 @@ class CreatePackage(object):
         # create json that conforms to digitization_bag or legacy_digital_bag in ursa major schema
         # return json file
 
-    def add_rights(self, arg):
-        # add rights from rights.json
-        # delete rights.json
-        # return json file
-        pass
-
-
     def package_bag(self, storage_root_dir, delivery_queue_dir, bag):
         tar_filename = "{}.tar.gz".format(bag.bag_identifier)
         with tarfile.open(os.path.join(storage_root_dir, tar_filename), "w:gz") as tar:
