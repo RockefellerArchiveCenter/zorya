@@ -59,7 +59,8 @@ class DiscoverBags(object):
         tf.extractall(tmp)
         original_bag_name = tf.getnames()[0]
         tf.close()
-        os.rename(os.path.join(tmp, original_bag_name), os.path.join(tmp, bag_identifier))
+        os.rename(os.path.join(tmp, original_bag_name),
+                  os.path.join(tmp, bag_identifier))
         os.remove(bag_path)
         return bag_identifier
 
@@ -76,15 +77,16 @@ class DiscoverBags(object):
             print("no bagit profile identifier")
             # TO DO: return exception
         else:
-            profile = bagit_profile.Profile(new_bag.info.get("BagIt-Profile-Identifier"))
+            profile = bagit_profile.Profile(
+                new_bag.info.get("BagIt-Profile-Identifier"))
             # TO DO: exception if cannot retrieve profile
             return profile.validate_bag_info(new_bag)
             # TO DO: exception if validation does not work
 
     def get_data(self, bag):
         new_bag = bagit.Bag(bag.bag_path)
-        bag.origin=new_bag.info.get('Origin')
-        bag.rights_id=new_bag.info.get('Rights-ID')
+        bag.origin = new_bag.info.get('Origin')
+        bag.rights_id = new_bag.info.get('Rights-ID')
         bag.end_date = new_bag.info.get('End-Date')
         bag.save()
         # TO DO: what is this returning?
@@ -128,7 +130,7 @@ class GetRights(object):
 
     def save_rights(self, bag, rights_json):
         # do we want to validate rights schema here?
-        bag.rights_data=rights_json
+        bag.rights_data = rights_json
         bag.save()
         # save json...to file? rights.json?
         pass
@@ -138,65 +140,54 @@ class CreatePackage(object):
     """Create JSON according to Ursa Major schema and package with bag"""
 
     def run(self):
-        delivery_queue_dir = settings.TMP_DIR # this variable name was taken from Aurora - should be renamed
+        temp_dir = settings.TMP_DIR
+        dest_dir = settings.DEST_DIR
         packaged = []
-        unpackaged = Bag.objects.all() #Bag.objects.filter(something)
+        unpackaged = Bag.objects.all()  # Bag.objects.filter(something)
         for u in unpackaged:
             try:
-                self.create_json(u, delivery_queue_dir)
-                # self.add_rights(u)
-                # self.package_bag()
+                self.create_json(u, temp_dir)
+                self.package_bag(temp_dir, dest_dir, u)
             except Exception as e:
                 print(e)
         return packaged
 
-    def create_json(self, bag, delivery_queue_dir):
+    def create_json(self, bag, temp_dir):
         bag_json = BagSerializer(bag).data
         # print(bag_json)
         with open(
             os.path.join(
-                delivery_queue_dir,
+                temp_dir,
                 bag.bag_identifier,
                 "{}.json".format(bag.bag_identifier),
             ),
             "w",
         ) as f:
             json.dump(bag_json, f, indent=4, sort_keys=True, default=str)
-        # create json that conforms to digitization_bag or legacy_digital_bag in ursa major schema
-        # return json file
+        return os.path.join(temp_dir, bag.bag_identifier, "{}.json".format(bag.bag_identifier))
 
-    def package_bag(self, storage_root_dir, delivery_queue_dir, bag):
+    def package_bag(self, temp_dir, dest_dir, bag):
         tar_filename = "{}.tar.gz".format(bag.bag_identifier)
-        with tarfile.open(os.path.join(storage_root_dir, tar_filename), "w:gz") as tar:
+        with tarfile.open(os.path.join(temp_dir, tar_filename), "w:gz") as tar:
             tar.add(
                 os.path.join(
-                    storage_root_dir,
+                    temp_dir,
                     bag.bag_identifier),
                 arcname=os.path.basename(
                     os.path.join(
-                        storage_root_dir,
+                        temp_dir,
                         bag.bag_identifier)))
-        mkdir(
-            os.path.join(delivery_queue_dir, bag.bag_identifier)
+        os.mkdir(
+            os.path.join(dest_dir, bag.bag_identifier)
         )
-
         move(
-            os.path.join(storage_root_dir, tar_filename),
+            os.path.join(temp_dir, tar_filename),
             os.path.join(
-                delivery_queue_dir,
+                dest_dir,
                 bag.bag_identifier,
                 tar_filename,
             ),
         )
-
-        
-        
-        with tarfile.open(join(
-                delivery_queue_dir,
-                "{}.tar.gz".format(bag.bag_identifier),
-            ), "w:gz") as tar:
-            tar.add(join(delivery_queue_dir, bag.bag_identifier), arcname=os.path.basename(os.path.join(delivery_queue_dir, bag.bag_identifier)))
-
 
 
 class DeliverPackage(object):
