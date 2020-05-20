@@ -50,10 +50,10 @@ class TestPackage(TestCase):
         get_rights = GetRights().run()
         self.assertIsNot(False, get_rights)
 
-    # def test_create_package(self):
-    #     """docstring for test_create_package"""
-    #     create_package = CreatePackage().run()
-    #     self.assertIsNot(False, create_package)
+    def test_create_package(self):
+        """docstring for test_create_package"""
+        create_package = CreatePackage().run()
+        self.assertIsNot(False, create_package)
 
     # def test_deliver_package(self):
     #     """docstring for test_deliver_package"""
