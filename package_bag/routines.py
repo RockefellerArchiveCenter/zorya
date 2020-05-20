@@ -134,7 +134,6 @@ class GetRights(object):
         print('assigning bag rights data')
         # do we want to validate rights schema here?
         bag.rights_data=rights_json
-        print(bag.rights_data)
         print('saving bag rights data')
         bag.save()
         # save json...to file? rights.json?

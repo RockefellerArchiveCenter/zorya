@@ -40,15 +40,12 @@ class TestPackage(TestCase):
         # make sure the right number of objects were processed
         # make sure that invalid bags were invalidated
         
-    # TEST: CAN SAVE RIGHTS
-    # mock retrieve_rights method
-
     @patch('package_bag.routines.GetRights.retrieve_rights')
-    def test_get_rights(self, mocked_rights):
+    def test_get_rights(self, mock_rights):
         """docstring for fname"""
         with open(join(rights_fixture_dir, '1.json')) as json_file:
             rights_json = json.load(json_file)
-        print(rights_json)
+        mock_rights.return_value = rights_json
         get_rights = GetRights().run()
         self.assertIsNot(False, get_rights)
 
