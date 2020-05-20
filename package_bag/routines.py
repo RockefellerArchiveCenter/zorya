@@ -82,7 +82,6 @@ class DiscoverBags(object):
             # TO DO: exception if validation does not work
 
     def get_data(self, bag):
-        print('getting some data')
         new_bag = bagit.Bag(bag.bag_path)
         bag.origin=new_bag.info.get('Origin')
         bag.rights_id=new_bag.info.get('Rights-ID')
@@ -99,8 +98,6 @@ class GetRights(object):
         url = "rights service url"
         apikey = "rights service apikey"
         has_rights = []
-        print("getting list of bags")
-        print(Bag.objects)
         for bag in Bag.objects.filter(rights_data__isnull=True):
             try:
                 print("no rights")
@@ -131,10 +128,8 @@ class GetRights(object):
         return rights_json
 
     def save_rights(self, bag, rights_json):
-        print('assigning bag rights data')
         # do we want to validate rights schema here?
         bag.rights_data=rights_json
-        print('saving bag rights data')
         bag.save()
         # save json...to file? rights.json?
         pass
