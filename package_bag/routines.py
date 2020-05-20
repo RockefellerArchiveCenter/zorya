@@ -163,11 +163,6 @@ class CreatePackage(object):
         ) as f:
             json.dump(bag_json, f, indent=4, sort_keys=True, default=str)
         # create json that conforms to digitization_bag or legacy_digital_bag in ursa major schema
-        # check if there is json for rights file - for now assume it's rights.json
-        # create json (makes extensible)
-        # from database, add origin to json
-        # from database, add bag uuid to json
-        # combine everything as one json, save somewhere
         # return json file
 
     def add_rights(self, arg):
