@@ -138,26 +138,28 @@ class CreatePackage(object):
     """Create JSON according to Ursa Major schema and package with bag"""
 
     def run(self):
+        delivery_queue_dir = settings.TMP_DIR # this variable name was taken from Aurora - should be renamed
         packaged = []
         unpackaged = Bag.objects.all() #Bag.objects.filter(something)
         for u in unpackaged:
             try:
-                create_json(u)
+                self.create_json(u, delivery_queue_dir)
+                # self.add_rights(u)
+                # self.package_bag()
             except Exception as e:
                 print(e)
         return packaged
 
-    def create_json(self, bag):
-        bag_json = BagSerializer(
-            bag
-        ).data
+    def create_json(self, bag, delivery_queue_dir):
+        bag_json = BagSerializer(bag).data
+        # print(bag_json)
         with open(
-            join(
+            os.path.join(
                 delivery_queue_dir,
                 bag.bag_identifier,
                 "{}.json".format(bag.bag_identifier),
             ),
-            "wb",
+            "w",
         ) as f:
             json.dump(bag_json, f, indent=4, sort_keys=True, default=str)
         # create json that conforms to digitization_bag or legacy_digital_bag in ursa major schema
@@ -167,7 +169,6 @@ class CreatePackage(object):
         # from database, add bag uuid to json
         # combine everything as one json, save somewhere
         # return json file
-        pass
 
     def add_rights(self, arg):
         # add rights from rights.json
@@ -178,22 +179,22 @@ class CreatePackage(object):
 
     def package_bag(self, storage_root_dir, delivery_queue_dir, bag):
         tar_filename = "{}.tar.gz".format(bag.bag_identifier)
-        with tarfile.open(join(storage_root_dir, tar_filename), "w:gz") as tar:
+        with tarfile.open(os.path.join(storage_root_dir, tar_filename), "w:gz") as tar:
             tar.add(
-                join(
+                os.path.join(
                     storage_root_dir,
                     bag.bag_identifier),
                 arcname=os.path.basename(
-                    join(
+                    os.path.join(
                         storage_root_dir,
                         bag.bag_identifier)))
         mkdir(
-            join(delivery_queue_dir, bag.bag_identifier)
+            os.path.join(delivery_queue_dir, bag.bag_identifier)
         )
 
         move(
-            join(storage_root_dir, tar_filename),
-            join(
+            os.path.join(storage_root_dir, tar_filename),
+            os.path.join(
                 delivery_queue_dir,
                 bag.bag_identifier,
                 tar_filename,
@@ -206,7 +207,7 @@ class CreatePackage(object):
                 delivery_queue_dir,
                 "{}.tar.gz".format(bag.bag_identifier),
             ), "w:gz") as tar:
-            tar.add(join(delivery_queue_dir, bag.bag_identifier), arcname=os.path.basename(join(delivery_queue_dir, bag.bag_identifier)))
+            tar.add(join(delivery_queue_dir, bag.bag_identifier), arcname=os.path.basename(os.path.join(delivery_queue_dir, bag.bag_identifier)))
 
 
 
