@@ -31,6 +31,7 @@ class TestPackage(TestCase):
             makedirs(dir)
             # TO DO: copy fixture rights to where they need to go
         self.discover_bags()
+        self.get_rights()
         # self.create_objects()
         # move fixtures into watched dir
 
@@ -41,7 +42,7 @@ class TestPackage(TestCase):
         # make sure that invalid bags were invalidated
         
     @patch('package_bag.routines.GetRights.retrieve_rights')
-    def test_get_rights(self, mock_rights):
+    def get_rights(self, mock_rights):
         """docstring for fname"""
         with open(join(rights_fixture_dir, '1.json')) as json_file:
             rights_json = json.load(json_file)
