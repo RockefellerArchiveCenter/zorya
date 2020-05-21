@@ -62,7 +62,7 @@ class DiscoverBags(object):
         original_bag_name = tf.getnames()[0]
         tf.close()
         rename(join(tmp, original_bag_name),
-                  join(tmp, bag_identifier))
+               join(tmp, bag_identifier))
         remove(bag_path)
         return bag_identifier
 

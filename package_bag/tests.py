@@ -16,6 +16,7 @@ from zorya import settings
 bag_fixture_dir = join(settings.BASE_DIR, 'fixtures', 'bags')
 rights_fixture_dir = join(settings.BASE_DIR, 'fixtures', 'rights')
 
+
 class TestPackage(TestCase):
     """docstring for TestPackage"""
 
@@ -40,7 +41,7 @@ class TestPackage(TestCase):
         self.assertIsNot(False, discover)
         # make sure the right number of objects were processed
         # make sure that invalid bags were invalidated
-        
+
     @patch('package_bag.routines.GetRights.retrieve_rights')
     def get_rights(self, mock_rights):
         """docstring for fname"""
