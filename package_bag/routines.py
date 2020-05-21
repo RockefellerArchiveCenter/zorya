@@ -49,6 +49,7 @@ class DiscoverBags(object):
         return processed
 
     def discover_bags(self, src):
+        '''Looks in a given directory for compressed bags, adds to list to process'''
         bags_list = []
         for d in listdir(src):
             ext = splitext(d)[-1]
@@ -57,6 +58,7 @@ class DiscoverBags(object):
         return bags_list
 
     def unpack_rename(self, bag_path, tmp):
+        '''Unpacks tarfile to a new directory with the name of the bag identifier (a UUID)'''
         bag_identifier = str(uuid4())
         tf = tarfile.open(bag_path, 'r')
         tf.extractall(tmp)
@@ -73,6 +75,7 @@ class DiscoverBags(object):
         return new_bag.validate()
 
     def validate_metadata(self, bag_path):
+        '''Validates the bag-info.txt file against the bagit profile'''
         # TO DO: first vlaidation that "BagIt-Profile-Identifier" exists
         new_bag = bagit.Bag(bag_path)
         bag_info = new_bag.info
@@ -87,6 +90,7 @@ class DiscoverBags(object):
             # TO DO: exception if validation does not work
 
     def get_data(self, bag):
+        '''Saves bag data from the bag-info.txt file'''
         new_bag = bagit.Bag(bag.bag_path)
         bag.origin = new_bag.info.get('Origin')
         bag.rights_id = new_bag.info.get('Rights-ID')
