@@ -12,8 +12,6 @@ from requests import post
 import tarfile
 import json
 
-# TO DO: import settings file (directories)
-# api key for rights service?
 from zorya import settings
 
 
@@ -23,8 +21,6 @@ class DiscoverBags(object):
     """
 
     def run(self):
-        # TO DO: assign src variable
-        # TO DO: assign tmp variable
         processed = []
         unprocessed = self.discover_bags(settings.SRC_DIR)
         for u in unprocessed:
@@ -42,14 +38,11 @@ class DiscoverBags(object):
                 processed.append(bag)
             except Exception as e:
                 print(e)
-                # since nothing's been saved in the database yet, where do logs go? - there are lots of different ways to do logging in django
-                # what does this process bags function return? - you want to
-                # return something out of the view that indicates which objects
-                # were processed
+        # what does this process bags function return? - you want to return something out of the view that indicates which objects were processed
         return processed
 
     def discover_bags(self, src):
-        '''Looks in a given directory for compressed bags, adds to list to process'''
+        """Looks in a given directory for compressed bags, adds to list to process"""
         bags_list = []
         for d in listdir(src):
             ext = splitext(d)[-1]
@@ -58,7 +51,7 @@ class DiscoverBags(object):
         return bags_list
 
     def unpack_rename(self, bag_path, tmp):
-        '''Unpacks tarfile to a new directory with the name of the bag identifier (a UUID)'''
+        """Unpacks tarfile to a new directory with the name of the bag identifier (a UUID)"""
         bag_identifier = str(uuid4())
         tf = tarfile.open(bag_path, 'r')
         tf.extractall(tmp)
@@ -75,7 +68,7 @@ class DiscoverBags(object):
         return new_bag.validate()
 
     def validate_metadata(self, bag_path):
-        '''Validates the bag-info.txt file against the bagit profile'''
+        """Validates the bag-info.txt file against the bagit profile"""
         # TO DO: first vlaidation that "BagIt-Profile-Identifier" exists
         new_bag = bagit.Bag(bag_path)
         bag_info = new_bag.info
@@ -90,7 +83,7 @@ class DiscoverBags(object):
             # TO DO: exception if validation does not work
 
     def get_data(self, bag):
-        '''Saves bag data from the bag-info.txt file'''
+        """Saves bag data from the bag-info.txt file"""
         new_bag = bagit.Bag(bag.bag_path)
         bag.origin = new_bag.info.get('Origin')
         bag.rights_id = new_bag.info.get('Rights-ID')
@@ -121,8 +114,9 @@ class GetRights(object):
         return has_rights
 
     def retrieve_rights(self, bag, url, apikey):
+        """Sends POST request to rights statement service, receives JSON in return"""
         # url for get request
-        resp = requests.post(
+        resp = post(
             url,
             data="data",  # TO DO: what data is sent to rights service? obviously includes rights ids
             headers={
@@ -137,7 +131,7 @@ class GetRights(object):
         return rights_json
 
     def save_rights(self, bag, rights_json):
-        # do we want to validate rights schema here?
+        """Save JSON from rights statement service to database"""
         bag.rights_data = rights_json
         bag.save()
         # save json...to file? rights.json?
@@ -151,7 +145,7 @@ class CreatePackage(object):
         temp_dir = settings.TMP_DIR
         dest_dir = settings.DEST_DIR
         packaged = []
-        unpackaged = Bag.objects.all()  # Bag.objects.filter(something)
+        unpackaged = Bag.objects.filter(rights_data__isnull=False)
         for u in unpackaged:
             try:
                 self.create_json(u, temp_dir)
@@ -162,6 +156,7 @@ class CreatePackage(object):
         return packaged
 
     def create_json(self, bag, temp_dir):
+        """Create JSON file to send to Ursa Major"""
         bag_json = BagSerializer(bag).data
         # print(bag_json)
         with open(join(temp_dir, bag.bag_identifier, "{}.json".format(bag.bag_identifier),), "w",) as f:
@@ -170,6 +165,7 @@ class CreatePackage(object):
                     "{}.json".format(bag.bag_identifier))
 
     def package_bag(self, temp_dir, dest_dir, bag):
+        """Create package to send to Ursa Major"""
         tar_filename = "{}.tar.gz".format(bag.bag_identifier)
         with tarfile.open(join(temp_dir, tar_filename), "w:gz") as tar:
             tar.add(join(temp_dir, bag.bag_identifier),
@@ -189,7 +185,7 @@ class DeliverPackage(object):
     def run(self):
         dest_dir = settings.DEST_DIR
         delivered = []
-        not_delivered = Bag.objects.all()  # Bag.objects.filter(something)
+        not_delivered = Bag.objects.filter(rights_data__isnull=False)
         for d in not_delivered:
             try:
                 self.deliver_data(d, dest_dir, settings.DELIVERY_URL)
@@ -199,6 +195,7 @@ class DeliverPackage(object):
         return delivered
 
     def deliver_data(self, bag, dest_dir, url):
+        """Send data to Ursa Major"""
         bag_data = join(dest_dir, bag.bag_identifier,
                     "{}.json".format(bag.bag_identifier))
         r = post(
@@ -212,5 +209,3 @@ class DeliverPackage(object):
         )
         r.raise_for_status()
 
-    # def send_package(self, arg):
-    #     pass
