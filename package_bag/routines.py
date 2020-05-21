@@ -106,6 +106,7 @@ class GetRights(object):
             try:
                 rights_json = self.retrieve_rights(bag, url, apikey)
                 self.save_rights(bag, rights_json)
+                has_rights.append(bag)
             except Exception as e:
                 print(e)
         # get rights ids from database
@@ -150,6 +151,7 @@ class CreatePackage(object):
             try:
                 self.create_json(u, temp_dir)
                 self.package_bag(temp_dir, dest_dir, u)
+                packaged.append(u)
             except Exception as e:
                 print(e)
         return packaged
