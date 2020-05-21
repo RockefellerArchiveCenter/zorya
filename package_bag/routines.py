@@ -6,6 +6,8 @@ from shutil import move
 import bagit
 import bagit_profile
 import os
+from os import listdir, rename, remove, mkdir
+from os.path import join, splitext, basename
 import tarfile
 import json
 
@@ -30,7 +32,7 @@ class DiscoverBags(object):
                 bag = Bag.objects.create(
                     original_bag_name=u,
                     bag_identifier=bag_id,
-                    bag_path=os.path.join(
+                    bag_path=join(
                         settings.TMP_DIR,
                         bag_id))
                 self.validate_structure(bag.bag_path)
@@ -47,10 +49,10 @@ class DiscoverBags(object):
 
     def discover_bags(self, src):
         bags_list = []
-        for d in os.listdir(src):
-            ext = os.path.splitext(d)[-1]
+        for d in listdir(src):
+            ext = splitext(d)[-1]
             if ext in ['.tgz', '.tar.gz', '.gz']:
-                bags_list.append(os.path.join(src, d))
+                bags_list.append(join(src, d))
         return bags_list
 
     def unpack_rename(self, bag_path, tmp):
@@ -59,9 +61,9 @@ class DiscoverBags(object):
         tf.extractall(tmp)
         original_bag_name = tf.getnames()[0]
         tf.close()
-        os.rename(os.path.join(tmp, original_bag_name),
-                  os.path.join(tmp, bag_identifier))
-        os.remove(bag_path)
+        rename(join(tmp, original_bag_name),
+                  join(tmp, bag_identifier))
+        remove(bag_path)
         return bag_identifier
 
     def validate_structure(self, bag_path):
@@ -156,7 +158,7 @@ class CreatePackage(object):
         bag_json = BagSerializer(bag).data
         # print(bag_json)
         with open(
-            os.path.join(
+            join(
                 temp_dir,
                 bag.bag_identifier,
                 "{}.json".format(bag.bag_identifier),
@@ -164,25 +166,25 @@ class CreatePackage(object):
             "w",
         ) as f:
             json.dump(bag_json, f, indent=4, sort_keys=True, default=str)
-        return os.path.join(temp_dir, bag.bag_identifier, "{}.json".format(bag.bag_identifier))
+        return join(temp_dir, bag.bag_identifier, "{}.json".format(bag.bag_identifier))
 
     def package_bag(self, temp_dir, dest_dir, bag):
         tar_filename = "{}.tar.gz".format(bag.bag_identifier)
-        with tarfile.open(os.path.join(temp_dir, tar_filename), "w:gz") as tar:
+        with tarfile.open(join(temp_dir, tar_filename), "w:gz") as tar:
             tar.add(
-                os.path.join(
+                join(
                     temp_dir,
                     bag.bag_identifier),
-                arcname=os.path.basename(
-                    os.path.join(
+                arcname=basename(
+                    join(
                         temp_dir,
                         bag.bag_identifier)))
-        os.mkdir(
-            os.path.join(dest_dir, bag.bag_identifier)
+        mkdir(
+            join(dest_dir, bag.bag_identifier)
         )
         move(
-            os.path.join(temp_dir, tar_filename),
-            os.path.join(
+            join(temp_dir, tar_filename),
+            join(
                 dest_dir,
                 bag.bag_identifier,
                 tar_filename,
