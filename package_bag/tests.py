@@ -18,7 +18,6 @@ rights_fixture_dir = join(settings.BASE_DIR, 'fixtures', 'rights')
 
 
 class TestPackage(TestCase):
-    """docstring for TestPackage"""
 
     def setUp(self):
         self.src_dir = settings.SRC_DIR
@@ -30,11 +29,9 @@ class TestPackage(TestCase):
         shutil.copytree(bag_fixture_dir, self.src_dir)
         for dir in [self.dest_dir, self.tmp_dir]:
             makedirs(dir)
-            # TO DO: copy fixture rights to where they need to go
         self.discover_bags()
         self.get_rights()
         self.create_package()
-        # move fixtures into watched dir
 
     def discover_bags(self):
         discover = DiscoverBags().run()
