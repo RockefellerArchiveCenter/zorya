@@ -33,7 +33,7 @@ class TestPackage(TestCase):
             # TO DO: copy fixture rights to where they need to go
         self.discover_bags()
         self.get_rights()
-        # self.create_objects()
+        self.create_package()
         # move fixtures into watched dir
 
     def discover_bags(self):
@@ -51,12 +51,12 @@ class TestPackage(TestCase):
         get_rights = GetRights().run()
         self.assertIsNot(False, get_rights)
 
-    def test_create_package(self):
+    def create_package(self):
         """docstring for test_create_package"""
         create_package = CreatePackage().run()
         self.assertIsNot(False, create_package)
 
-    # def test_deliver_package(self):
-    #     """docstring for test_deliver_package"""
-    #     deliver_package = DeliverPackage().run()
-    #     self.assertIsNot(False, deliver_package)
+    def test_deliver_package(self):
+        """docstring for test_deliver_package"""
+        deliver_package = DeliverPackage().run()
+        self.assertIsNot(False, deliver_package)

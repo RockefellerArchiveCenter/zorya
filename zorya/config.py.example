@@ -15,3 +15,5 @@ BASE_DIR = ''
 SRC_DIR = '{}/src'.format(BASE_DIR)
 TMP_DIR = '{}/tmp'.format(BASE_DIR)
 DEST_DIR = '{}/dest'.format(BASE_DIR)
+
+DELIVERY_URL = 'http://ursa-major-web:8005/store-bags/'

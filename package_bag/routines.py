@@ -8,6 +8,7 @@ import bagit_profile
 import os
 from os import listdir, rename, remove, mkdir
 from os.path import join, splitext, basename
+from requests import post
 import tarfile
 import json
 
@@ -159,51 +160,53 @@ class CreatePackage(object):
     def create_json(self, bag, temp_dir):
         bag_json = BagSerializer(bag).data
         # print(bag_json)
-        with open(
-            join(
-                temp_dir,
-                bag.bag_identifier,
-                "{}.json".format(bag.bag_identifier),
-            ),
-            "w",
-        ) as f:
+        with open(join(temp_dir, bag.bag_identifier, "{}.json".format(bag.bag_identifier),), "w",) as f:
             json.dump(bag_json, f, indent=4, sort_keys=True, default=str)
-        return join(temp_dir, bag.bag_identifier, "{}.json".format(bag.bag_identifier))
+        return join(temp_dir, bag.bag_identifier,
+                    "{}.json".format(bag.bag_identifier))
 
     def package_bag(self, temp_dir, dest_dir, bag):
         tar_filename = "{}.tar.gz".format(bag.bag_identifier)
         with tarfile.open(join(temp_dir, tar_filename), "w:gz") as tar:
-            tar.add(
-                join(
-                    temp_dir,
-                    bag.bag_identifier),
-                arcname=basename(
-                    join(
-                        temp_dir,
-                        bag.bag_identifier)))
+            tar.add(join(temp_dir, bag.bag_identifier),
+                    arcname=basename(join(temp_dir, bag.bag_identifier)))
         mkdir(
             join(dest_dir, bag.bag_identifier)
         )
         move(
             join(temp_dir, tar_filename),
-            join(
-                dest_dir,
-                bag.bag_identifier,
-                tar_filename,
-            ),
+            join(dest_dir, bag.bag_identifier, tar_filename,),
         )
 
 
 class DeliverPackage(object):
     """Deliver package to Ursa Major"""
 
-    # use package serializer here
+    def run(self):
+        dest_dir = settings.DEST_DIR
+        delivered = []
+        not_delivered = Bag.objects.all()  # Bag.objects.filter(something)
+        for d in not_delivered:
+            try:
+                self.deliver_data(d, dest_dir, settings.DELIVERY_URL)
+                delivered.append(d)
+            except Exception as e:
+                print(e)
+        return delivered
 
-    def run(self, arg):
-        pass
+    def deliver_data(self, bag, dest_dir, url):
+        bag_data = join(dest_dir, bag.bag_identifier,
+                    "{}.json".format(bag.bag_identifier))
+        r = post(
+            url,
+            json={
+                "bag_data": bag_data,
+                "origin": bag.origin,
+                "identifier": bag.bag_identifier},
+            headers={
+                "Content-Type": "application/json"},
+        )
+        r.raise_for_status()
 
-    def send_data(self, arg):
-        pass
-
-    def send_package(self, arg):
-        pass
+    # def send_package(self, arg):
+    #     pass
