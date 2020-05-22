@@ -2,7 +2,7 @@ import shutil
 import json
 
 from unittest.mock import patch
-from os import listdir, makedirs, rmdir, getcwd
+from os import listdir, makedirs, getcwd
 from os.path import isdir, join
 
 from django.test import TestCase
