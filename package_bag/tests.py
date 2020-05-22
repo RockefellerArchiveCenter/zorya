@@ -2,7 +2,7 @@ import shutil
 import json
 
 from unittest.mock import patch
-from os import listdir, makedirs, getcwd
+from os import listdir, makedirs, rmdir, getcwd
 from os.path import isdir, join
 
 from django.test import TestCase
@@ -20,40 +20,41 @@ rights_fixture_dir = join(settings.BASE_DIR, 'fixtures', 'rights')
 class TestPackage(TestCase):
 
     def setUp(self):
-        self.src_dir = settings.SRC_DIR
-        self.tmp_dir = settings.TMP_DIR
-        self.dest_dir = settings.DEST_DIR
-        for d in [self.src_dir, self.tmp_dir, self.dest_dir]:
+        for d in [settings.TMP_DIR, settings.DEST_DIR]:
             if isdir(d):
                 shutil.rmtree(d)
-        shutil.copytree(bag_fixture_dir, self.src_dir)
-        for dir in [self.dest_dir, self.tmp_dir]:
-            makedirs(dir)
-        self.discover_bags()
-        self.get_rights()
-        self.create_package()
+                makedirs(d)
+            else:
+                makedirs(d)
 
-    def discover_bags(self):
+    def test_discover_bags(self):
+        """Ensures that bags are correctly discovered."""
+        shutil.copytree(bag_fixture_dir, settings.SRC_DIR)
         discover = DiscoverBags().run()
         self.assertIsNot(False, discover)
         # make sure the right number of objects were processed
         # make sure that invalid bags were invalidated
 
     @patch('package_bag.routines.GetRights.retrieve_rights')
-    def get_rights(self, mock_rights):
-        """docstring for fname"""
+    def test_get_rights(self, mock_rights):
+        """Ensures that rights are correctly retrieved and assigned."""
         with open(join(rights_fixture_dir, '1.json')) as json_file:
             rights_json = json.load(json_file)
         mock_rights.return_value = rights_json
         get_rights = GetRights().run()
         self.assertIsNot(False, get_rights)
 
-    def create_package(self):
-        """docstring for test_create_package"""
+    def test_create_package(self):
+        """Ensures that packages are correctly created."""
         create_package = CreatePackage().run()
         self.assertIsNot(False, create_package)
 
     def test_deliver_package(self):
-        """docstring for test_deliver_package"""
+        """Ensures that packages are delivered correctly."""
         deliver_package = DeliverPackage().run()
         self.assertIsNot(False, deliver_package)
+
+    def tearDown(self):
+        for d in [settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR]:
+            if isdir(d):
+                shutil.rmtree(d)
