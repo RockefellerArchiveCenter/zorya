@@ -72,8 +72,7 @@ class DiscoverBags(object):
         """Validates the bag-info.txt file against the bagit profile"""
         # TO DO: first vlaidation that "BagIt-Profile-Identifier" exists
         new_bag = bagit.Bag(bag_path)
-        bag_info = new_bag.info
-        if "BagIt-Profile-Identifier" not in bag_info:
+        if "BagIt-Profile-Identifier" not in new_bag.info:
             print("no bagit profile identifier")
             # TO DO: return exception
         else:
