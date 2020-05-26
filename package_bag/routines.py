@@ -46,7 +46,7 @@ class DiscoverBags(object):
         bags_list = []
         for d in listdir(src):
             ext = splitext(d)[-1]
-            if ext in ['.tgz', '.tar.gz', '.gz']:
+            if ext in ['.tgz', '.gz']:
                 bags_list.append(join(src, d))
         return bags_list
 
@@ -208,4 +208,3 @@ class DeliverPackage(object):
                 "Content-Type": "application/json"},
         )
         r.raise_for_status()
-
