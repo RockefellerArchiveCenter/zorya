@@ -92,7 +92,7 @@ class DiscoverBags(object):
 
 
 # how does something get sent from one bag to another? how does batching work?
-class GetRights(object):
+class RightsAssigner(object):
     """Send rights IDs to external service and receive JSON in return"""
 
     def run(self):
