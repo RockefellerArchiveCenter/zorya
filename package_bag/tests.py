@@ -7,7 +7,7 @@ from os.path import isdir, join
 
 from django.test import TestCase
 
-from .routines import DiscoverBags, GetRights, CreatePackage, DeliverPackage
+from .routines import DiscoverBags, RightsAssigner, CreatePackage, DeliverPackage
 
 from zorya import settings
 
@@ -36,15 +36,15 @@ class TestPackage(TestCase):
         # check number of objects stored in database matches number of objects processed
         # make sure that invalid bags were invalidated
 
-    @patch('package_bag.routines.GetRights.retrieve_rights')
+    @patch('package_bag.routines.RightsAssigner.retrieve_rights')
     def test_get_rights(self, mock_rights):
         """Ensures that rights are correctly retrieved and assigned."""
         # load data into database
         with open(join(rights_fixture_dir, '1.json')) as json_file:
             rights_json = json.load(json_file)
         mock_rights.return_value = rights_json
-        get_rights = GetRights().run()
-        self.assertIsNot(False, get_rights)
+        assign_rights = RightsAssigner().run()
+        self.assertIsNot(False, assign_rights)
         # make sure mock_rights was called the correct number of times
         # make sure bag.rights is not null and matches rights_json
 
