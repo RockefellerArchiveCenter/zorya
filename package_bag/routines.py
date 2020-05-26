@@ -5,7 +5,6 @@ from uuid import uuid4
 from shutil import move
 import bagit
 import bagit_profile
-import os
 from os import listdir, rename, remove, mkdir
 from os.path import join, splitext, basename
 from requests import post
