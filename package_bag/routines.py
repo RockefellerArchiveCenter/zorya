@@ -98,19 +98,19 @@ class GetRights(object):
     def run(self):
         url = "rights service url"
         apikey = "rights service apikey"
-        has_rights = []
+        bags_with_rights = []
         for bag in Bag.objects.filter(rights_data__isnull=True):
             try:
                 rights_json = self.retrieve_rights(bag, url, apikey)
                 self.save_rights(bag, rights_json)
-                has_rights.append(bag.bag_identifier)
+                bags_with_rights.append(bag.bag_identifier)
             except Exception as e:
                 print(e)
         # get rights ids from database
         # loop through rights ids
         # retrieve rights
         # save rights
-        return has_rights
+        return bags_with_rights
 
     def retrieve_rights(self, bag, url, apikey):
         """Sends POST request to rights statement service, receives JSON in return"""
