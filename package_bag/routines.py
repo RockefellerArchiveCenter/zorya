@@ -14,7 +14,7 @@ import json
 from zorya import settings
 
 
-class DiscoverBags(object):
+class BagDiscoverer(object):
     """
     Validates bag structure and bag info file, renames bag with unique ID
     """
