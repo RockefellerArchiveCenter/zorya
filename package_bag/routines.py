@@ -39,6 +39,7 @@ class DiscoverBags(object):
             except Exception as e:
                 print(e)
         # what does this process bags function return? - you want to return something out of the view that indicates which objects were processed
+        # e.g.: "{} bags discovered".format(len(processed)), processed
         return processed
 
     def discover_bags(self, src):
