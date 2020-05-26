@@ -7,7 +7,7 @@ from os.path import isdir, join
 
 from django.test import TestCase
 
-from .routines import DiscoverBags, RightsAssigner, CreatePackage, DeliverPackage
+from .routines import BagDiscoverer, RightsAssigner, CreatePackage, DeliverPackage
 
 from zorya import settings
 
@@ -30,7 +30,7 @@ class TestPackage(TestCase):
     def test_discover_bags(self):
         """Ensures that bags are correctly discovered."""
         shutil.copytree(bag_fixture_dir, settings.SRC_DIR)
-        discover = DiscoverBags().run()
+        discover = BagDiscoverer().run()
         self.assertIsNot(False, discover)
         # make sure the right number of objects were processed
         # check number of objects stored in database matches number of objects processed
