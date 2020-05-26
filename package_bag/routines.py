@@ -35,7 +35,7 @@ class DiscoverBags(object):
                 self.validate_structure(bag.bag_path)
                 self.validate_metadata(bag.bag_path)
                 self.get_data(bag)
-                processed.append(bag)
+                processed.append(bag.bag_identifier)
             except Exception as e:
                 print(e)
         # what does this process bags function return? - you want to return something out of the view that indicates which objects were processed
@@ -104,7 +104,7 @@ class GetRights(object):
             try:
                 rights_json = self.retrieve_rights(bag, url, apikey)
                 self.save_rights(bag, rights_json)
-                has_rights.append(bag)
+                has_rights.append(bag.bag_identifier)
             except Exception as e:
                 print(e)
         # get rights ids from database
@@ -150,7 +150,7 @@ class CreatePackage(object):
             try:
                 self.create_json(u, temp_dir)
                 self.package_bag(temp_dir, dest_dir, u)
-                packaged.append(u)
+                packaged.append(u.bag_identifier)
             except Exception as e:
                 print(e)
         return packaged
@@ -189,7 +189,7 @@ class DeliverPackage(object):
         for d in not_delivered:
             try:
                 self.deliver_data(d, dest_dir, settings.DELIVERY_URL)
-                delivered.append(d)
+                delivered.append(d.bag_identifier)
             except Exception as e:
                 print(e)
         return delivered
