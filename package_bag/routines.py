@@ -137,7 +137,7 @@ class RightsAssigner(object):
         pass
 
 
-class CreatePackage(object):
+class PackageMaker(object):
     """Create JSON according to Ursa Major schema and package with bag"""
 
     def run(self):
