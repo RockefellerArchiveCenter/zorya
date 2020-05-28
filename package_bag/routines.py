@@ -141,14 +141,15 @@ class PackageMaker(object):
     """Create JSON according to Ursa Major schema and package with bag"""
 
     def run(self):
-        temp_dir = settings.TMP_DIR
         dest_dir = settings.DEST_DIR
         packaged = []
         unpackaged = Bag.objects.filter(rights_data__isnull=False)
         for bag in unpackaged:
             try:
                 self.create_json(bag)
-                self.package_bag(dest_dir, bag)
+                self.package_bag(bag)
+                bag.bag_path = self.move_to_queue(bag, dest_dir)
+                bag.save()
                 packaged.append(bag.bag_identifier)
             except Exception as e:
                 print(e)
@@ -161,20 +162,19 @@ class PackageMaker(object):
             json.dump(bag_json, f, indent=4, sort_keys=True, default=str)
         return True
 
-    def package_bag(self, dest_dir, bag):
+    def package_bag(self, bag):
         """Create package to send to Ursa Major"""
         tar_filename = "{}.tar.gz".format(bag.bag_path)
         with tarfile.open(tar_filename, "w:gz") as tar:
             tar.add(bag.bag_path,
                     arcname=basename(bag.bag_identifier))
-        mkdir(
-            join(dest_dir, bag.bag_identifier)
-        )
-        move(
-            bag_path,
-            join(dest_dir, "{}.tar.gz".format(bag.bag_identifier)),
-        )
+        mkdir(join(dest_dir, bag.bag_identifier))
+        
+        
+    def move_to_queue(self, bag, dest_dir):
         new_bag_path = join(dest_dir, "{}.tar.gz".format(bag.bag_identifier))
+        move(bag_path, new_bag_path,)
+        return new_bag_path
 
 
 class DeliverPackage(object):
