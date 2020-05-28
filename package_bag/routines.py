@@ -44,10 +44,10 @@ class BagDiscoverer(object):
     def discover_bags(self, src):
         """Looks in a given directory for compressed bags, adds to list to process"""
         bags_list = []
-        for d in listdir(src):
-            ext = splitext(d)[-1]
+        for bag in listdir(src):
+            ext = splitext(bag)[-1]
             if ext in ['.tgz', '.gz']:
-                bags_list.append(join(src, d))
+                bags_list.append(join(src, bag))
         return bags_list
 
     def unpack_rename(self, bag_path, tmp):
@@ -184,10 +184,10 @@ class PackageDeliverer(object):
         dest_dir = settings.DEST_DIR
         delivered = []
         not_delivered = Bag.objects.filter(rights_data__isnull=False)
-        for d in not_delivered:
+        for bag in not_delivered:
             try:
-                self.deliver_data(d, dest_dir, settings.DELIVERY_URL)
-                delivered.append(d.bag_identifier)
+                self.deliver_data(bag, dest_dir, settings.DELIVERY_URL)
+                delivered.append(bag.bag_identifier)
             except Exception as e:
                 print(e)
         return delivered
