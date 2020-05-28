@@ -154,28 +154,27 @@ class PackageMaker(object):
                 print(e)
         return packaged
 
-    def create_json(self, bag, temp_dir):
+    def create_json(self, bag):
         """Create JSON file to send to Ursa Major"""
         bag_json = BagSerializer(bag).data
-        # print(bag_json)
-        with open(join(temp_dir, bag.bag_identifier, "{}.json".format(bag.bag_identifier),), "w",) as f:
+        with open("{}.json".format(bag.bag_path), "w",) as f:
             json.dump(bag_json, f, indent=4, sort_keys=True, default=str)
-        return join(temp_dir, bag.bag_identifier,
-                    "{}.json".format(bag.bag_identifier))
+        return "{}.json".format(bag.bag_identifier)
 
-    def package_bag(self, temp_dir, dest_dir, bag):
+    def package_bag(self, dest_dir, bag):
         """Create package to send to Ursa Major"""
-        tar_filename = "{}.tar.gz".format(bag.bag_identifier)
-        with tarfile.open(join(temp_dir, tar_filename), "w:gz") as tar:
-            tar.add(join(temp_dir, bag.bag_identifier),
-                    arcname=basename(join(temp_dir, bag.bag_identifier)))
+        tar_filename = "{}.tar.gz".format(bag.bag_path)
+        with tarfile.open(tar_filename, "w:gz") as tar:
+            tar.add(bag.bag_path,
+                    arcname=basename(bag.bag_identifier))
         mkdir(
             join(dest_dir, bag.bag_identifier)
         )
         move(
-            join(temp_dir, tar_filename),
-            join(dest_dir, bag.bag_identifier, tar_filename,),
+            bag_path,
+            join(dest_dir, "{}.tar.gz".format(bag.bag_identifier)),
         )
+        new_bag_path = join(dest_dir, "{}.tar.gz".format(bag.bag_identifier))
 
 
 class DeliverPackage(object):
