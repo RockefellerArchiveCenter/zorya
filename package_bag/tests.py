@@ -7,7 +7,7 @@ from os.path import isdir, join
 
 from django.test import TestCase
 
-from .routines import BagDiscoverer, RightsAssigner, PackageMaker, DeliverPackage
+from .routines import BagDiscoverer, RightsAssigner, PackageMaker, PackageDeliverer
 
 from zorya import settings
 
@@ -62,7 +62,7 @@ class TestPackage(TestCase):
         """Ensures that packages are delivered correctly."""
         # move binaries into DEST_DIR
         # load data into database
-        deliver_package = DeliverPackage().run()
+        deliver_package = PackageDeliverer().run()
         self.assertIsNot(False, deliver_package)
         # ensure the mock was called the correct number of times
         # ensure the mock was called with the correct data
