@@ -22,11 +22,11 @@ class BagDiscoverer(object):
     def run(self):
         processed = []
         unprocessed = self.discover_bags(settings.SRC_DIR)
-        for u in unprocessed:
+        for bag in unprocessed:
             try:
-                bag_id = self.unpack_rename(u, settings.TMP_DIR)
+                bag_id = self.unpack_rename(bag, settings.TMP_DIR)
                 bag = Bag.objects.create(
-                    original_bag_name=u,
+                    original_bag_name=bag,
                     bag_identifier=bag_id,
                     bag_path=join(
                         settings.TMP_DIR,
@@ -145,11 +145,11 @@ class PackageMaker(object):
         dest_dir = settings.DEST_DIR
         packaged = []
         unpackaged = Bag.objects.filter(rights_data__isnull=False)
-        for u in unpackaged:
+        for bag in unpackaged:
             try:
-                self.create_json(u, temp_dir)
-                self.package_bag(temp_dir, dest_dir, u)
-                packaged.append(u.bag_identifier)
+                self.create_json(bag)
+                self.package_bag(dest_dir, bag)
+                packaged.append(bag.bag_identifier)
             except Exception as e:
                 print(e)
         return packaged
