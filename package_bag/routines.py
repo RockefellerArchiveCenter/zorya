@@ -177,7 +177,7 @@ class PackageMaker(object):
         return new_bag_path
 
 
-class DeliverPackage(object):
+class PackageDeliverer(object):
     """Deliver package to Ursa Major"""
 
     def run(self):
