@@ -7,7 +7,7 @@ from os.path import isdir, join
 
 from django.test import TestCase
 
-from .routines import BagDiscoverer, RightsAssigner, CreatePackage, DeliverPackage
+from .routines import BagDiscoverer, RightsAssigner, PackageMaker, DeliverPackage
 
 from zorya import settings
 
@@ -52,7 +52,7 @@ class TestPackage(TestCase):
         """Ensures that packages are correctly created."""
         # move binaries into TMP_DIR
         # load data into database
-        create_package = CreatePackage().run()
+        create_package = PackageMaker().run()
         self.assertIsNot(False, create_package)
         # make sure TMP_DIR is empty
         # test the number of objects in DEST_DIR
