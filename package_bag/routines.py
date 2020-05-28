@@ -159,7 +159,7 @@ class PackageMaker(object):
         bag_json = BagSerializer(bag).data
         with open("{}.json".format(bag.bag_path), "w",) as f:
             json.dump(bag_json, f, indent=4, sort_keys=True, default=str)
-        return "{}.json".format(bag.bag_identifier)
+        return True
 
     def package_bag(self, dest_dir, bag):
         """Create package to send to Ursa Major"""
