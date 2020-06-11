@@ -1,7 +1,7 @@
 # from django.contrib.postgres.fields import JSONField
-from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.postgres.fields import JSONField
+from django.db import models
 
 # TO DO: make fields nullable and blank
 

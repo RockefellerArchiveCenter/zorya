@@ -1,17 +1,18 @@
-from .models import Bag
-from package_bag.serializers import BagSerializer
-
-from uuid import uuid4
+import json
+import tarfile
+from os import listdir, mkdir, remove, rename
+from os.path import basename, join, splitext
 from shutil import move
+from uuid import uuid4
+
 import bagit
 import bagit_profile
-from os import listdir, rename, remove, mkdir
-from os.path import join, splitext, basename
 from requests import post
-import tarfile
-import json
 
+from package_bag.serializers import BagSerializer
 from zorya import settings
+
+from .models import Bag
 
 
 class BagDiscoverer(object):
@@ -22,6 +23,7 @@ class BagDiscoverer(object):
     def run(self):
         processed = []
         unprocessed = self.discover_bags(settings.SRC_DIR)
+        print("{} bags discovered".format(len(processed)))
         for bag in unprocessed:
             try:
                 bag_id = self.unpack_rename(bag, settings.TMP_DIR)

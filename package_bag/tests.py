@@ -1,15 +1,15 @@
-import shutil
 import json
-
-from unittest.mock import patch
-from os import listdir, makedirs, getcwd
+import shutil
+from os import getcwd, listdir, makedirs
 from os.path import isdir, join
+from unittest.mock import patch
 
 from django.test import TestCase
 
-from .routines import BagDiscoverer, RightsAssigner, PackageMaker, PackageDeliverer
-
 from zorya import settings
+
+from .routines import (BagDiscoverer, PackageDeliverer, PackageMaker,
+                       RightsAssigner)
 
 # Create your tests here.
 
