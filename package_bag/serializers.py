@@ -8,4 +8,4 @@ class BagSerializer(serializers.ModelSerializer):
     # to send to ursa major
     class Meta:
         model = Bag
-        fields = ("bag_identifier", "bag_path", "origin", "rights_data")
+        fields = ("bag_identifier", "origin", "rights_data")
