@@ -80,15 +80,14 @@ class BagDiscoverer(object):
             profile = bagit_profile.Profile(
                 new_bag.info.get("BagIt-Profile-Identifier"))
             # TO DO: exception if cannot retrieve profile
-            return profile.validate_bag_info(new_bag)
+            return profile.validate(new_bag)
             # TO DO: exception if validation does not work
 
     def get_data(self, bag):
         """Saves bag data from the bag-info.txt file"""
         new_bag = bagit.Bag(bag.bag_path)
-        bag.origin = new_bag.info.get('Origin')
-        bag.rights_id = new_bag.info.get('Rights-ID')
-        bag.end_date = new_bag.info.get('End-Date')
+        for key in ["Origin", "Rights-ID", "End-Date"]:
+            setattr(bag, key.lower().replace("-", "_"), new_bag.info.get(key))
         bag.save()
         # TO DO: what is this returning?
 
@@ -104,7 +103,8 @@ class RightsAssigner(object):
         for bag in Bag.objects.filter(rights_data__isnull=True):
             try:
                 rights_json = self.retrieve_rights(bag, url, apikey)
-                self.save_rights(bag, rights_json)
+                bag.rights_data = rights_json
+                bag.save()
                 bags_with_rights.append(bag.bag_identifier)
             except Exception as e:
                 print(e)
@@ -130,13 +130,6 @@ class RightsAssigner(object):
         # QUESTION: do we want to validate the json we get back?
         # return saved json
         return rights_json
-
-    def save_rights(self, bag, rights_json):
-        """Save JSON from rights statement service to database"""
-        bag.rights_data = rights_json
-        bag.save()
-        # save json...to file? rights.json?
-        pass
 
 
 class PackageMaker(object):
@@ -171,8 +164,7 @@ class PackageMaker(object):
             tar.add(bag.bag_path,
                     arcname=basename(bag.bag_identifier))
         mkdir(join(dest_dir, bag.bag_identifier))
-        
-        
+
     def move_to_queue(self, bag, dest_dir):
         new_bag_path = join(dest_dir, "{}.tar.gz".format(bag.bag_identifier))
         move(bag_path, new_bag_path,)
@@ -196,8 +188,8 @@ class PackageDeliverer(object):
 
     def deliver_data(self, bag, dest_dir, url):
         """Send data to Ursa Major"""
-        bag_data = join(dest_dir, bag.bag_identifier,
-                    "{}.json".format(bag.bag_identifier))
+        bag_data = join(
+            dest_dir, bag.bag_identifier, "{}.json".format(bag.bag_identifier))
         r = post(
             url,
             json={
