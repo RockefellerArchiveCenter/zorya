@@ -1,4 +1,3 @@
-# from django.contrib.postgres.fields import JSONField
 from django.contrib.auth.models import AbstractUser
 from django.contrib.postgres.fields import JSONField
 from django.db import models
@@ -23,7 +22,7 @@ class Bag(models.Model):
     end_date = models.CharField(
         max_length=255,
         null=True,
-        blank=True)  # to be posted to rights service
+        blank=True)
     rights_data = JSONField(null=True, blank=True)
     created = models.DateTimeField(auto_now=True)
     last_modified = models.DateTimeField(auto_now_add=True)
