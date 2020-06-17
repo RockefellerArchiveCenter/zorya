@@ -2,7 +2,7 @@ import json
 import tarfile
 from os import listdir, mkdir, remove, rename
 from os.path import basename, join, splitext
-from shutil import move
+from shutil import move, rmtree
 from uuid import uuid4
 
 import bagit
@@ -139,37 +139,33 @@ class PackageMaker(object):
         unpackaged = Bag.objects.filter(rights_data__isnull=False)
         for bag in unpackaged:
             try:
-                self.create_json(bag)
-                self.package_bag(bag, dest_dir)
-                bag.bag_path = self.move_to_queue(bag, dest_dir)
-                bag.save()
+                package_path = self.create_package(bag, BagSerializer(bag).data)
                 packaged.append(bag.bag_identifier)
             except Exception as e:
                 print(e)
         return packaged
 
-    def create_json(self, bag):
-        """Create JSON file to send to Ursa Major"""
-        bag_json = BagSerializer(bag).data
-        with open("{}.json".format(bag.bag_path), "w",) as f:
-            json.dump(bag_json, f, indent=4, sort_keys=True, default=str)
-        return True
-
-    def package_bag(self, bag, dest_dir):
+    # TODO: There are a number of things that need to be replaced with asterism
+    # helpers here. I'm also not sure it makes sense to delegate to this function
+    # out of the run method - I think we could just call this all within that
+    # method.
+    def create_package(self, bag, bag_json):
         """Create package to send to Ursa Major"""
-        tar_filename = "{}.tar.gz".format(bag.bag_path)
-        with tarfile.open(tar_filename, "w:gz") as tar:
-            tar.add(bag.bag_path,
-                    arcname=basename(bag.bag_identifier))
-        mkdir(join(dest_dir, bag.bag_identifier))
-
-    # TODO: This method could either be a classmethod, or could be factored out
-    # into a separate helper. It has no awareness of the class it's part of,
-    # meaning `self` is never called.
-    def move_to_queue(self, bag, dest_dir):
-        new_path = join(dest_dir, "{}.tar.gz".format(bag.bag_identifier))
-        move(bag.bag_path, new_path)
-        return new_path
+        package_root = join(settings.DEST_DIR, bag.bag_identifier)
+        mkdir(package_root)
+        with open("{}.json".format(join(package_root, bag.bag_identifier)), "w",) as f:
+            json.dump(bag_json, f, indent=4, sort_keys=True, default=str)
+        bag_tar_filename = "{}.tar.gz".format(bag.bag_identifier)
+        with tarfile.open(join(package_root, bag_tar_filename), "w:gz") as tar:
+            tar.add(
+                bag.bag_path, arcname=basename(bag.bag_identifier))
+        package_path = "{}.tar.gz".format(package_root)
+        with tarfile.open(package_path, "w:gz") as tar:
+            tar.add(
+                package_root, arcname=basename(package_root))
+        rmtree(bag.bag_path)
+        rmtree(package_root)
+        return package_path
 
 
 class PackageDeliverer(object):

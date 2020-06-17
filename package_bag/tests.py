@@ -84,14 +84,13 @@ class TestPackage(TestCase):
         self.copy_binaries(settings.TMP_DIR)
         create_package = PackageMaker().run()
         self.assertIsNot(False, create_package)
-        # TODO: Failing because files are not removed from TMP_DIR
-        # self.assertEqual(
-        #     len(listdir(settings.TMP_DIR)), 0,
-        #     "Temporary directory is not empty.")
-        # TODO: Failing because both tar.gz and directories are moved to DEST_DIR
-        # self.assertEqual(
-        #     len(listdir(settings.DEST_DIR)), self.expected_count,
-        #     "Incorrect number of binaries in destination directory.")
+        print(listdir(settings.DEST_DIR))
+        self.assertEqual(
+            len(listdir(settings.TMP_DIR)), 0,
+            "Temporary directory is not empty.")
+        self.assertEqual(
+            len(listdir(settings.DEST_DIR)), self.expected_count,
+            "Incorrect number of binaries in destination directory.")
 
     @patch('package_bag.routines.post')
     def test_deliver_package(self, mock_post):
