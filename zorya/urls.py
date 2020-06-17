@@ -15,13 +15,19 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
-from package_bag.views import BagViewSet
+from package_bag.views import (BagDiscovererView, BagViewSet,
+                               PackageDelivererView, PackageMakerView,
+                               RightsAssignerView)
 from rest_framework import routers
 
 router = routers.DefaultRouter()
 router.register(r'bags', BagViewSet, 'bag')
 
 urlpatterns = [
+    path('discover-bags', BagDiscovererView.as_view(), name="bagdiscoverer"),
+    path('assign-rights', RightsAssignerView.as_view(), name="rightsassigner"),
+    path('make-package', PackageMakerView.as_view(), name="packagemaker"),
+    path('deliver-package', PackageDelivererView.as_view(), name="packagedeliverer"),
     path('admin/', admin.site.urls),
     path('', include(router.urls)),
 ]
