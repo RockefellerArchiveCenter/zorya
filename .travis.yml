@@ -4,15 +4,28 @@ services:
   - docker
 env:
   global:
-    - DOCKER_COMPOSE_VERSION: 1.18.0
+    - DOCKER_COMPOSE_VERSION: 1.25.5
+    - SERVICE_NAME: zorya-web
+    - APPLICATION_NAME: zorya
 before_install:
   - sudo rm /usr/local/bin/docker-compose
   - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
-  - cp zorya/config.py.example zorya/config.py
+  - cp ${APPLICATION_NAME}/config.py.example ${APPLICATION_NAME}/config.py
   - docker-compose up -d
   - sleep 20s
+  - docker-compose exec ${SERVICE_NAME} pip install coverage pre-commit
+  - docker-compose exec ${SERVICE_NAME} pre-commit install
 install: true
+before_script:
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64
+    > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+  - ./cc-test-reporter before-build
 script:
-  - docker-compose exec zorya-web python manage.py test
+  - docker-compose exec ${SERVICE_NAME} pre-commit run --all-files --show-diff-on-failure
+  - docker-compose exec ${SERVICE_NAME} coverage run manage.py test
+after_script:
+  - docker-compose exec ${SERVICE_NAME} coverage xml
+  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT

@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+
 from . import config as CF
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -129,4 +130,3 @@ TMP_DIR = CF.TMP_DIR
 DEST_DIR = CF.DEST_DIR
 
 DELIVERY_URL = CF.DELIVERY_URL
-
