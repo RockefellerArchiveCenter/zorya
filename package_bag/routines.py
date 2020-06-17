@@ -1,5 +1,6 @@
 import json
 import tarfile
+from asterism.file_helpers import make_tarfile
 from os import listdir, mkdir, remove, rename
 from os.path import basename, join, splitext
 from shutil import rmtree
@@ -157,13 +158,8 @@ class PackageMaker(object):
         with open("{}.json".format(join(package_root, bag.bag_identifier)), "w",) as f:
             json.dump(bag_json, f, indent=4, sort_keys=True, default=str)
         bag_tar_filename = "{}.tar.gz".format(bag.bag_identifier)
-        with tarfile.open(join(package_root, bag_tar_filename), "w:gz") as tar:
-            tar.add(
-                bag.bag_path, arcname=basename(bag.bag_identifier))
         package_path = "{}.tar.gz".format(package_root)
-        with tarfile.open(package_path, "w:gz") as tar:
-            tar.add(
-                package_root, arcname=basename(package_root))
+        make_tarfile(bag.bag_path, package_path)
         rmtree(bag.bag_path)
         rmtree(package_root)
         return package_path
