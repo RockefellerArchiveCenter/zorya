@@ -2,14 +2,13 @@ import json
 import tarfile
 from os import listdir, mkdir, remove, rename
 from os.path import basename, join, splitext
-from shutil import move, rmtree
+from shutil import rmtree
 from uuid import uuid4
 
 import bagit
 import bagit_profile
-from requests import post
-
 from package_bag.serializers import BagSerializer
+from requests import post
 from zorya import settings
 
 from .models import Bag
@@ -127,19 +126,18 @@ class RightsAssigner(object):
         # get serialized rights back as json
         # QUESTION: do we want to validate the json we get back?
         # return saved json
-        return rights_json
+        return resp.json()
 
 
 class PackageMaker(object):
     """Create JSON according to Ursa Major schema and package with bag"""
 
     def run(self):
-        dest_dir = settings.DEST_DIR
         packaged = []
         unpackaged = Bag.objects.filter(rights_data__isnull=False)
         for bag in unpackaged:
             try:
-                package_path = self.create_package(bag, BagSerializer(bag).data)
+                self.create_package(bag, BagSerializer(bag).data)
                 packaged.append(bag.bag_identifier)
             except Exception as e:
                 print(e)

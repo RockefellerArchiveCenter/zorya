@@ -1,20 +1,18 @@
 import json
 import shutil
 from datetime import datetime
-from os import getcwd, listdir, makedirs
+from os import listdir, makedirs
 from os.path import isdir, isfile, join
 from random import choice, randint
 from unittest.mock import patch
 from uuid import uuid4
 
 from django.test import TestCase
-
 from zorya import settings
 
+from .models import Bag
 from .routines import (BagDiscoverer, PackageDeliverer, PackageMaker,
                        RightsAssigner)
-from .models import Bag
-
 
 BAG_FIXTURE_DIR = join(settings.BASE_DIR, 'fixtures', 'bags')
 RIGHTS_FIXTURE_DIR = join(settings.BASE_DIR, 'fixtures', 'rights')
@@ -36,7 +34,7 @@ class TestPackage(TestCase):
     def add_bags_to_db(self, count=5, rights_data=None):
         for n in range(count):
             bag_id = str(uuid4())
-            bag = Bag.objects.create(
+            Bag.objects.create(
                 original_bag_name=bag_id,
                 bag_identifier=bag_id,
                 bag_path=join(

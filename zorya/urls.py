@@ -15,9 +15,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
-from rest_framework import routers
-
 from package_bag.views import BagViewSet
+from rest_framework import routers
 
 router = routers.DefaultRouter()
 router.register(r'bags', BagViewSet, 'bag')
