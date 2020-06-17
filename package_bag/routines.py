@@ -2,7 +2,7 @@ import json
 import tarfile
 from os import listdir, mkdir, remove, rename
 from os.path import basename, join, splitext
-from shutil import move
+from shutil import move, rmtree
 from uuid import uuid4
 
 import bagit
@@ -23,20 +23,18 @@ class BagDiscoverer(object):
     def run(self):
         processed = []
         unprocessed = self.discover_bags(settings.SRC_DIR)
-        print("{} bags discovered".format(len(processed)))
         for bag in unprocessed:
             try:
                 bag_id = self.unpack_rename(bag, settings.TMP_DIR)
-                bag = Bag.objects.create(
+                bag_path = join(settings.TMP_DIR, bag_id)
+                self.validate_structure(bag_path)
+                self.validate_metadata(bag_path)
+                new_bag = Bag.objects.create(
                     original_bag_name=bag,
                     bag_identifier=bag_id,
-                    bag_path=join(
-                        settings.TMP_DIR,
-                        bag_id))
-                self.validate_structure(bag.bag_path)
-                self.validate_metadata(bag.bag_path)
-                self.get_data(bag)
-                processed.append(bag.bag_identifier)
+                    bag_path=bag_path)
+                self.get_data(new_bag)
+                processed.append(bag_id)
             except Exception as e:
                 print(e)
         # what does this process bags function return? - you want to return something out of the view that indicates which objects were processed
@@ -71,7 +69,7 @@ class BagDiscoverer(object):
 
     def validate_metadata(self, bag_path):
         """Validates the bag-info.txt file against the bagit profile"""
-        # TO DO: first vlaidation that "BagIt-Profile-Identifier" exists
+        # TO DO: first validation that "BagIt-Profile-Identifier" exists
         new_bag = bagit.Bag(bag_path)
         if "BagIt-Profile-Identifier" not in new_bag.info:
             print("no bagit profile identifier")
@@ -80,8 +78,8 @@ class BagDiscoverer(object):
             profile = bagit_profile.Profile(
                 new_bag.info.get("BagIt-Profile-Identifier"))
             # TO DO: exception if cannot retrieve profile
-            return profile.validate(new_bag)
-            # TO DO: exception if validation does not work
+            if not profile.validate(new_bag):
+                raise Exception(profile.report.errors)
 
     def get_data(self, bag):
         """Saves bag data from the bag-info.txt file"""
@@ -141,34 +139,33 @@ class PackageMaker(object):
         unpackaged = Bag.objects.filter(rights_data__isnull=False)
         for bag in unpackaged:
             try:
-                self.create_json(bag)
-                self.package_bag(bag)
-                bag.bag_path = self.move_to_queue(bag, dest_dir)
-                bag.save()
+                package_path = self.create_package(bag, BagSerializer(bag).data)
                 packaged.append(bag.bag_identifier)
             except Exception as e:
                 print(e)
         return packaged
 
-    def create_json(self, bag):
-        """Create JSON file to send to Ursa Major"""
-        bag_json = BagSerializer(bag).data
-        with open("{}.json".format(bag.bag_path), "w",) as f:
-            json.dump(bag_json, f, indent=4, sort_keys=True, default=str)
-        return True
-
-    def package_bag(self, bag):
+    # TODO: There are a number of things that need to be replaced with asterism
+    # helpers here. I'm also not sure it makes sense to delegate to this function
+    # out of the run method - I think we could just call this all within that
+    # method.
+    def create_package(self, bag, bag_json):
         """Create package to send to Ursa Major"""
-        tar_filename = "{}.tar.gz".format(bag.bag_path)
-        with tarfile.open(tar_filename, "w:gz") as tar:
-            tar.add(bag.bag_path,
-                    arcname=basename(bag.bag_identifier))
-        mkdir(join(dest_dir, bag.bag_identifier))
-
-    def move_to_queue(self, bag, dest_dir):
-        new_bag_path = join(dest_dir, "{}.tar.gz".format(bag.bag_identifier))
-        move(bag_path, new_bag_path,)
-        return new_bag_path
+        package_root = join(settings.DEST_DIR, bag.bag_identifier)
+        mkdir(package_root)
+        with open("{}.json".format(join(package_root, bag.bag_identifier)), "w",) as f:
+            json.dump(bag_json, f, indent=4, sort_keys=True, default=str)
+        bag_tar_filename = "{}.tar.gz".format(bag.bag_identifier)
+        with tarfile.open(join(package_root, bag_tar_filename), "w:gz") as tar:
+            tar.add(
+                bag.bag_path, arcname=basename(bag.bag_identifier))
+        package_path = "{}.tar.gz".format(package_root)
+        with tarfile.open(package_path, "w:gz") as tar:
+            tar.add(
+                package_root, arcname=basename(package_root))
+        rmtree(bag.bag_path)
+        rmtree(package_root)
+        return package_path
 
 
 class PackageDeliverer(object):
