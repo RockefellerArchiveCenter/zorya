@@ -159,8 +159,7 @@ class PackageMaker(object):
             json.dump(bag_json, f, indent=4, sort_keys=True, default=str)
         bag_tar_filename = "{}.tar.gz".format(bag.bag_identifier)
         package_path = "{}.tar.gz".format(package_root)
-        make_tarfile(bag.bag_path, package_path)
-        rmtree(bag.bag_path)
+        make_tarfile(bag.bag_path, package_path, remove_src=True)
         rmtree(package_root)
         return package_path
 
