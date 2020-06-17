@@ -8,11 +8,15 @@ from unittest.mock import patch
 from uuid import uuid4
 
 from django.test import TestCase
+from django.urls import reverse
+from rest_framework.test import APIRequestFactory
 from zorya import settings
 
 from .models import Bag
 from .routines import (BagDiscoverer, PackageDeliverer, PackageMaker,
                        RightsAssigner)
+from .views import (BagDiscovererView, PackageDelivererView, PackageMakerView,
+                    RightsAssignerView)
 
 BAG_FIXTURE_DIR = join(settings.BASE_DIR, 'fixtures', 'bags')
 RIGHTS_FIXTURE_DIR = join(settings.BASE_DIR, 'fixtures', 'rights')
@@ -21,10 +25,11 @@ RIGHTS_FIXTURE_DIR = join(settings.BASE_DIR, 'fixtures', 'rights')
 class TestPackage(TestCase):
 
     def setUp(self):
+        self.factory = APIRequestFactory()
         self.expected_count = randint(1, 10)
         with open(join(RIGHTS_FIXTURE_DIR, '1.json')) as json_file:
             self.rights_json = json.load(json_file)
-        for d in [settings.TMP_DIR, settings.DEST_DIR]:
+        for d in [settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR]:
             if isdir(d):
                 shutil.rmtree(d)
                 makedirs(d)
@@ -46,6 +51,7 @@ class TestPackage(TestCase):
                 end_date=datetime.now().strftime("%Y-%m-%d"))
 
     def copy_binaries(self, dest_dir):
+        shutil.rmtree(settings.SRC_DIR)
         shutil.copytree(BAG_FIXTURE_DIR, settings.SRC_DIR)
         binary = choice([i for i in listdir(settings.SRC_DIR) if isfile(join(settings.SRC_DIR, i)) and not i.startswith("invalid_")])
         for obj in Bag.objects.all():
@@ -59,6 +65,7 @@ class TestPackage(TestCase):
     def test_discover_bags(self):
         """Ensures that bags are correctly discovered."""
         expected = len([i for i in listdir(BAG_FIXTURE_DIR) if i.startswith("invalid_")])
+        shutil.rmtree(settings.SRC_DIR)
         shutil.copytree(BAG_FIXTURE_DIR, settings.SRC_DIR)
         discover = BagDiscoverer().run()
         self.assertIsNot(False, discover)
@@ -82,7 +89,6 @@ class TestPackage(TestCase):
         self.copy_binaries(settings.TMP_DIR)
         create_package = PackageMaker().run()
         self.assertIsNot(False, create_package)
-        print(listdir(settings.DEST_DIR))
         self.assertEqual(
             len(listdir(settings.TMP_DIR)), 0,
             "Temporary directory is not empty.")
@@ -98,11 +104,22 @@ class TestPackage(TestCase):
         deliver_package = PackageDeliverer().run()
         self.assertIsNot(False, deliver_package)
         self.assertEqual(
-            len(deliver_package), self.expected_count,
+            len(deliver_package[1]), self.expected_count,
             "Incorrect number of bags processed.")
         self.assertEqual(
             mock_post.call_count, self.expected_count,
             "Incorrect number of update requests made.")
+
+    def test_views(self):
+        for view_str, view in [
+                ("bagdiscoverer", BagDiscovererView),
+                ("rightsassigner", RightsAssignerView),
+                ("packagemaker", PackageMakerView),
+                ("packagedeliverer", PackageDelivererView)]:
+            request = self.factory.post(reverse(view_str))
+            response = view.as_view()(request)
+            self.assertEqual(
+                response.status_code, 200, "View error: {}".format(response.data))
 
     def tearDown(self):
         for d in [settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR]:

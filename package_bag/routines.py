@@ -38,7 +38,8 @@ class BagDiscoverer(object):
                 print(e)
         # what does this process bags function return? - you want to return something out of the view that indicates which objects were processed
         # e.g.: "{} bags discovered".format(len(processed)), processed
-        return processed
+        msg = "Bags discovered." if len(processed) else "No bags were found."
+        return msg, processed
 
     def discover_bags(self, src):
         """Looks in a given directory for compressed bags, adds to list to process"""
@@ -109,7 +110,8 @@ class RightsAssigner(object):
         # loop through rights ids
         # retrieve rights
         # save rights
-        return bags_with_rights
+        msg = "Rights assigned." if len(bags_with_rights) else "No bags to assign rights to found."
+        return msg, bags_with_rights
 
     def retrieve_rights(self, bag, url, apikey):
         """Sends POST request to rights statement service, receives JSON in return"""
@@ -141,7 +143,8 @@ class PackageMaker(object):
                 packaged.append(bag.bag_identifier)
             except Exception as e:
                 print(e)
-        return packaged
+        msg = "Packages created." if len(packaged) else "No files ready for packaging."
+        return msg, packaged
 
     # TODO: There are a number of things that need to be replaced with asterism
     # helpers here. I'm also not sure it makes sense to delegate to this function
@@ -179,7 +182,8 @@ class PackageDeliverer(object):
                 delivered.append(bag.bag_identifier)
             except Exception as e:
                 print(e)
-        return delivered
+        msg = "Packages delivered." if len(delivered) else "No packages to deliver."
+        return msg, delivered
 
     def deliver_data(self, bag, dest_dir, url):
         """Send data to Ursa Major"""
