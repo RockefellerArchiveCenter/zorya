@@ -140,7 +140,7 @@ class PackageMaker(object):
         for bag in unpackaged:
             try:
                 self.create_json(bag)
-                self.package_bag(bag)
+                self.package_bag(bag, dest_dir)
                 bag.bag_path = self.move_to_queue(bag, dest_dir)
                 bag.save()
                 packaged.append(bag.bag_identifier)
@@ -155,7 +155,7 @@ class PackageMaker(object):
             json.dump(bag_json, f, indent=4, sort_keys=True, default=str)
         return True
 
-    def package_bag(self, bag):
+    def package_bag(self, bag, dest_dir):
         """Create package to send to Ursa Major"""
         tar_filename = "{}.tar.gz".format(bag.bag_path)
         with tarfile.open(tar_filename, "w:gz") as tar:
@@ -163,10 +163,13 @@ class PackageMaker(object):
                     arcname=basename(bag.bag_identifier))
         mkdir(join(dest_dir, bag.bag_identifier))
 
+    # TODO: This method could either be a classmethod, or could be factored out
+    # into a separate helper. It has no awareness of the class it's part of,
+    # meaning `self` is never called.
     def move_to_queue(self, bag, dest_dir):
-        new_bag_path = join(dest_dir, "{}.tar.gz".format(bag.bag_identifier))
-        move(bag_path, new_bag_path,)
-        return new_bag_path
+        new_path = join(dest_dir, "{}.tar.gz".format(bag.bag_identifier))
+        move(bag.bag_path, new_path)
+        return new_path
 
 
 class PackageDeliverer(object):
