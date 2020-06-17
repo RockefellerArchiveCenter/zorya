@@ -1,11 +1,10 @@
 import json
 import shutil
+from datetime import datetime
 from os import getcwd, listdir, makedirs
 from os.path import isdir, join
-from random import randint
 from unittest.mock import patch
 from uuid import uuid4
-
 
 from django.test import TestCase
 
@@ -13,13 +12,11 @@ from zorya import settings
 
 from .routines import (BagDiscoverer, PackageDeliverer, PackageMaker,
                        RightsAssigner)
-                       
 from .models import Bag
 
 
-
-bag_fixture_dir = join(settings.BASE_DIR, 'fixtures', 'bags')
-rights_fixture_dir = join(settings.BASE_DIR, 'fixtures', 'rights')
+BAG_FIXTURE_DIR = join(settings.BASE_DIR, 'fixtures', 'bags')
+RIGHTS_FIXTURE_DIR = join(settings.BASE_DIR, 'fixtures', 'rights')
 
 
 class TestPackage(TestCase):
@@ -31,17 +28,9 @@ class TestPackage(TestCase):
                 makedirs(d)
             else:
                 makedirs(d)
-                
-    def generate_date(self):
-        date = []
-        date.append(str(randint(1910,1995)))
-        date.append(str(randint(1,12)).zfill(2))
-        date.append(str(randint(1,28)).zfill(2))
-        return "-".join(date)
-    
-    def add_bags_to_db(self):
-        count = 0
-        while count < 5:
+
+    def add_bags_to_db(self, count=5):
+        for n in range(count):
             bag_id = str(uuid4())
             bag = Bag.objects.create(
                 original_bag_name=bag_id,
@@ -51,26 +40,23 @@ class TestPackage(TestCase):
                     bag_id),
                 origin="digitization",
                 rights_id="1 2 3",
-                end_date=self.generate_date()
-                )
-            bag.save()
-            count += 1
+                end_date=datetime.now().strftime("%Y-%m-%d"))
 
     def test_discover_bags(self):
         """Ensures that bags are correctly discovered."""
-        shutil.copytree(bag_fixture_dir, settings.SRC_DIR)
+        expected = len([i for i in listdir(BAG_FIXTURE_DIR) if i.startswith("invalid_")])
+        shutil.copytree(BAG_FIXTURE_DIR, settings.SRC_DIR)
         discover = BagDiscoverer().run()
         self.assertIsNot(False, discover)
-        # make sure the right number of objects were processed
-        # check number of objects stored in database matches number of objects processed
-        # make sure that invalid bags were invalidated
+        self.assertEqual(len(discover), expected, "Wrong number of bags processed.")
+        self.assertEqual(len(Bag.objects.all()), expected, "Wrong number of bags saved in database.")
 
     @patch('package_bag.routines.RightsAssigner.retrieve_rights')
     def test_get_rights(self, mock_rights):
         """Ensures that rights are correctly retrieved and assigned."""
         # load data into database
         self.add_bags_to_db()
-        with open(join(rights_fixture_dir, '1.json')) as json_file:
+        with open(join(RIGHTS_FIXTURE_DIR, '1.json')) as json_file:
             rights_json = json.load(json_file)
         mock_rights.return_value = rights_json
         assign_rights = RightsAssigner().run()

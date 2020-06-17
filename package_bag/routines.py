@@ -23,20 +23,18 @@ class BagDiscoverer(object):
     def run(self):
         processed = []
         unprocessed = self.discover_bags(settings.SRC_DIR)
-        print("{} bags discovered".format(len(processed)))
         for bag in unprocessed:
             try:
                 bag_id = self.unpack_rename(bag, settings.TMP_DIR)
-                bag = Bag.objects.create(
+                bag_path = join(settings.TMP_DIR, bag_id)
+                self.validate_structure(bag_path)
+                self.validate_metadata(bag_path)
+                new_bag = Bag.objects.create(
                     original_bag_name=bag,
                     bag_identifier=bag_id,
-                    bag_path=join(
-                        settings.TMP_DIR,
-                        bag_id))
-                self.validate_structure(bag.bag_path)
-                self.validate_metadata(bag.bag_path)
-                self.get_data(bag)
-                processed.append(bag.bag_identifier)
+                    bag_path=bag_path)
+                self.get_data(new_bag)
+                processed.append(bag_id)
             except Exception as e:
                 print(e)
         # what does this process bags function return? - you want to return something out of the view that indicates which objects were processed
@@ -71,7 +69,7 @@ class BagDiscoverer(object):
 
     def validate_metadata(self, bag_path):
         """Validates the bag-info.txt file against the bagit profile"""
-        # TO DO: first vlaidation that "BagIt-Profile-Identifier" exists
+        # TO DO: first validation that "BagIt-Profile-Identifier" exists
         new_bag = bagit.Bag(bag_path)
         if "BagIt-Profile-Identifier" not in new_bag.info:
             print("no bagit profile identifier")
@@ -80,8 +78,8 @@ class BagDiscoverer(object):
             profile = bagit_profile.Profile(
                 new_bag.info.get("BagIt-Profile-Identifier"))
             # TO DO: exception if cannot retrieve profile
-            return profile.validate(new_bag)
-            # TO DO: exception if validation does not work
+            if not profile.validate(new_bag):
+                raise Exception(profile.report.errors)
 
     def get_data(self, bag):
         """Saves bag data from the bag-info.txt file"""
