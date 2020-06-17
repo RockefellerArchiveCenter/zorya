@@ -1,9 +1,8 @@
 import json
 import tarfile
-from asterism.file_helpers import make_tarfile
+from asterism.file_helpers import make_tarfile, remove_file_or_dir
 from os import listdir, mkdir, remove, rename
 from os.path import basename, join, splitext
-from shutil import rmtree
 from uuid import uuid4
 
 import bagit
@@ -160,7 +159,7 @@ class PackageMaker(object):
         bag_tar_filename = "{}.tar.gz".format(bag.bag_identifier)
         package_path = "{}.tar.gz".format(package_root)
         make_tarfile(bag.bag_path, package_path, remove_src=True)
-        rmtree(package_root)
+        remove_file_or_dir(package_root)
         return package_path
 
 
