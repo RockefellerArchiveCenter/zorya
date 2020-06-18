@@ -1,12 +1,13 @@
 import json
 import tarfile
 from os import listdir, mkdir, remove, rename
-from os.path import basename, join, splitext
-from shutil import rmtree
+from os.path import join, splitext
 from uuid import uuid4
 
 import bagit
 import bagit_profile
+from asterism.bagit_helpers import validate
+from asterism.file_helpers import make_tarfile
 from package_bag.serializers import BagSerializer
 from requests import post
 from zorya import settings
@@ -26,13 +27,15 @@ class BagDiscoverer(object):
             try:
                 bag_id = self.unpack_rename(bag, settings.TMP_DIR)
                 bag_path = join(settings.TMP_DIR, bag_id)
-                self.validate_structure(bag_path)
-                self.validate_metadata(bag_path)
+                validate(bag_path)
+                bag_data = self.validate_metadata(bag_path)
                 new_bag = Bag.objects.create(
                     original_bag_name=bag,
                     bag_identifier=bag_id,
                     bag_path=bag_path)
-                self.get_data(new_bag)
+                for key in ["Origin", "Rights-ID", "End-Date"]:
+                    setattr(new_bag, key.lower().replace("-", "_"), bag_data.get(key))
+                new_bag.save()
                 processed.append(bag_id)
             except Exception as e:
                 print(e)
@@ -62,32 +65,19 @@ class BagDiscoverer(object):
         remove(bag_path)
         return bag_identifier
 
-    def validate_structure(self, bag_path):
-        """Validates a bag against the BagIt specification"""
-        new_bag = bagit.Bag(bag_path)
-        return new_bag.validate()
-
     def validate_metadata(self, bag_path):
         """Validates the bag-info.txt file against the bagit profile"""
-        # TO DO: first validation that "BagIt-Profile-Identifier" exists
         new_bag = bagit.Bag(bag_path)
         if "BagIt-Profile-Identifier" not in new_bag.info:
-            print("no bagit profile identifier")
-            # TO DO: return exception
+            raise Exception("no bagit profile identifier")
         else:
             profile = bagit_profile.Profile(
                 new_bag.info.get("BagIt-Profile-Identifier"))
             # TO DO: exception if cannot retrieve profile
             if not profile.validate(new_bag):
                 raise Exception(profile.report.errors)
-
-    def get_data(self, bag):
-        """Saves bag data from the bag-info.txt file"""
-        new_bag = bagit.Bag(bag.bag_path)
-        for key in ["Origin", "Rights-ID", "End-Date"]:
-            setattr(bag, key.lower().replace("-", "_"), new_bag.info.get(key))
-        bag.save()
-        # TO DO: what is this returning?
+            else:
+                return new_bag.info
 
 
 # how does something get sent from one bag to another? how does batching work?
@@ -157,15 +147,9 @@ class PackageMaker(object):
         with open("{}.json".format(join(package_root, bag.bag_identifier)), "w",) as f:
             json.dump(bag_json, f, indent=4, sort_keys=True, default=str)
         bag_tar_filename = "{}.tar.gz".format(bag.bag_identifier)
-        with tarfile.open(join(package_root, bag_tar_filename), "w:gz") as tar:
-            tar.add(
-                bag.bag_path, arcname=basename(bag.bag_identifier))
+        make_tarfile(bag.bag_path, join(package_root, bag_tar_filename), remove_src=True)
         package_path = "{}.tar.gz".format(package_root)
-        with tarfile.open(package_path, "w:gz") as tar:
-            tar.add(
-                package_root, arcname=basename(package_root))
-        rmtree(bag.bag_path)
-        rmtree(package_root)
+        make_tarfile(package_root, package_path, remove_src=True)
         return package_path
 
 
