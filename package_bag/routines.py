@@ -69,11 +69,10 @@ class BagDiscoverer(object):
         """Validates the bag-info.txt file against the bagit profile"""
         new_bag = bagit.Bag(bag_path)
         if "BagIt-Profile-Identifier" not in new_bag.info:
-            raise Exception("no bagit profile identifier")
+            raise Exception("No BagIt Profile to validate against")
         else:
             profile = bagit_profile.Profile(
                 new_bag.info.get("BagIt-Profile-Identifier"))
-            # TO DO: exception if cannot retrieve profile
             if not profile.validate(new_bag):
                 raise Exception(profile.report.errors)
             else:
