@@ -18,7 +18,7 @@ class Bag(models.Model):
         choices=ORIGIN_CHOICES,
         null=True,
         blank=True)
-    rights_id = models.CharField(max_length=255, null=True, blank=True)
+    rights_id = JSONField(null=True, blank=True)
     end_date = models.CharField(
         max_length=255,
         null=True,
