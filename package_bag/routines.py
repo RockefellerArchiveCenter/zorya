@@ -1,5 +1,6 @@
 import json
 import tarfile
+from asterism.bagit_helpers import validate
 from asterism.file_helpers import make_tarfile, remove_file_or_dir
 from os import listdir, mkdir, remove, rename
 from os.path import basename, join, splitext
@@ -26,7 +27,7 @@ class BagDiscoverer(object):
             try:
                 bag_id = self.unpack_rename(bag, settings.TMP_DIR)
                 bag_path = join(settings.TMP_DIR, bag_id)
-                self.validate_structure(bag_path)
+                validate(bag_path)
                 self.validate_metadata(bag_path)
                 new_bag = Bag.objects.create(
                     original_bag_name=bag,
@@ -62,10 +63,10 @@ class BagDiscoverer(object):
         remove(bag_path)
         return bag_identifier
 
-    def validate_structure(self, bag_path):
-        """Validates a bag against the BagIt specification"""
-        new_bag = bagit.Bag(bag_path)
-        return new_bag.validate()
+    # def validate_structure(self, bag_path):
+    #     """Validates a bag against the BagIt specification"""
+    #     new_bag = bagit.Bag(bag_path)
+    #     return new_bag.validate()
 
     def validate_metadata(self, bag_path):
         """Validates the bag-info.txt file against the bagit profile"""
