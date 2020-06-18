@@ -3,7 +3,7 @@ import tarfile
 from asterism.bagit_helpers import validate
 from asterism.file_helpers import make_tarfile, remove_file_or_dir
 from os import listdir, mkdir, remove, rename
-from os.path import basename, join, splitext
+from os.path import join, splitext
 from uuid import uuid4
 
 import bagit
@@ -157,7 +157,6 @@ class PackageMaker(object):
         mkdir(package_root)
         with open("{}.json".format(join(package_root, bag.bag_identifier)), "w",) as f:
             json.dump(bag_json, f, indent=4, sort_keys=True, default=str)
-        bag_tar_filename = "{}.tar.gz".format(bag.bag_identifier)
         package_path = "{}.tar.gz".format(package_root)
         make_tarfile(bag.bag_path, package_path, remove_src=True)
         remove_file_or_dir(package_root)
