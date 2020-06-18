@@ -1,5 +1,6 @@
 import json
 import shutil
+import tarfile
 from datetime import datetime
 from os import listdir, makedirs
 from os.path import isdir, isfile, join
@@ -95,6 +96,14 @@ class TestPackage(TestCase):
         self.assertEqual(
             len(listdir(settings.DEST_DIR)), self.expected_count,
             "Incorrect number of binaries in destination directory.")
+        for package in listdir(settings.DEST_DIR):
+            with tarfile.open(join(settings.DEST_DIR, package), "r") as tf:
+                names = tf.getnames()
+                bag_id = package.rstrip(".tar.gz")
+                for member in [bag_id, join(bag_id, package), join(bag_id, "{}.json".format(bag_id))]:
+                    self.assertTrue(
+                        member in names,
+                        "Incorrectly structured package: {} was not found in {}".format(member, names))
 
     @patch('package_bag.routines.post')
     def test_deliver_package(self, mock_post):
