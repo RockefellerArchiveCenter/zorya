@@ -99,11 +99,11 @@ class TestPackage(TestCase):
         for package in listdir(settings.DEST_DIR):
             with tarfile.open(join(settings.DEST_DIR, package), "r") as tf:
                 names = tf.getnames()
-                bag_id = package.rstrip(".tar.gz")
-                for member in [bag_id, join(bag_id, package), join(bag_id, "{}.json".format(bag_id))]:
-                    self.assertTrue(
-                        member in names,
-                        "Incorrectly structured package: {} was not found in {}".format(member, names))
+                bag_id = package.replace(".tar.gz", "")
+                expected = [bag_id, join(bag_id, package), join(bag_id, "{}.json".format(bag_id))]
+                self.assertEqual(
+                    set(expected), set(names),
+                    "Incorrectly structured package: expected {} but got {}".format(expected, names))
 
     @patch('package_bag.routines.post')
     def test_deliver_package(self, mock_post):
