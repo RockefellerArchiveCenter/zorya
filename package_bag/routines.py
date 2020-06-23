@@ -7,7 +7,7 @@ from uuid import uuid4
 import bagit
 import bagit_profile
 from asterism.bagit_helpers import validate
-from asterism.file_helpers import make_tarfile
+from asterism.file_helpers import make_tarfile, remove_file_or_dir
 from package_bag.serializers import BagSerializer
 from requests import post
 from zorya import settings
@@ -38,6 +38,7 @@ class BagDiscoverer(object):
                 new_bag.save()
                 processed.append(bag_id)
             except Exception as e:
+                remove_file_or_dir(bag_path)
                 print(e)
         # what does this process bags function return? - you want to return something out of the view that indicates which objects were processed
         # e.g.: "{} bags discovered".format(len(processed)), processed

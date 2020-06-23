@@ -71,6 +71,7 @@ class TestPackage(TestCase):
         self.assertIsNot(False, discover)
         self.assertEqual(len(discover), expected, "Wrong number of bags processed.")
         self.assertEqual(len(Bag.objects.all()), expected, "Wrong number of bags saved in database.")
+        self.assertEqual(len(listdir(settings.TMP_DIR)), expected, "Wrong number of bags deleted.")
 
     @patch('package_bag.routines.RightsAssigner.retrieve_rights')
     def test_get_rights(self, mock_rights):
