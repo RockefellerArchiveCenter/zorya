@@ -64,14 +64,14 @@ class TestPackage(TestCase):
 
     def test_discover_bags(self):
         """Ensures that bags are correctly discovered."""
-        expected = len([i for i in listdir(BAG_FIXTURE_DIR) if i.startswith("invalid_")])
+        expected = len([i for i in listdir(BAG_FIXTURE_DIR) if not i.startswith("invalid_")])
         shutil.rmtree(settings.SRC_DIR)
         shutil.copytree(BAG_FIXTURE_DIR, settings.SRC_DIR)
         discover = BagDiscoverer().run()
         self.assertIsNot(False, discover)
         self.assertEqual(len(discover), expected, "Wrong number of bags processed.")
         self.assertEqual(len(Bag.objects.all()), expected, "Wrong number of bags saved in database.")
-        self.assertEqual(len(listdir(settings.TMP_DIR)), expected, "Wrong number of bags deleted.")
+        self.assertEqual(len(listdir(settings.TMP_DIR)), expected, "Invalid bags were not deleted.")
 
     @patch('package_bag.routines.RightsAssigner.retrieve_rights')
     def test_get_rights(self, mock_rights):
