@@ -33,6 +33,13 @@ Or, if you want to remove all data
 
 ### Routes
 
+
+| Method | URL | Parameters | Response  | Behavior  |
+|--------|-----|---|---|---|
+|GET|/bags| |200|Returns a list of bags|
+|GET|/bags/{id}| |200|Returns data about an individual bag|
+
+
 ## Requirements
 
 Using this repo requires having [Docker](https://store.docker.com/search?type=edition&offering=community) installed.
