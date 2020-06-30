@@ -27,9 +27,9 @@ Or, if you want to remove all data
 ## Services
 
 * Validate and rename bag
-* Get bag information
 * Get rights information from external service
 * Create delivery package
+* Send delivery package to an external application
 
 ### Routes
 
