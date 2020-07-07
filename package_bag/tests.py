@@ -65,10 +65,14 @@ class TestPackage(TestCase):
 
     def test_discover_bags(self):
         """Ensures that bags are correctly discovered."""
+        total_bags = len([i for i in listdir(BAG_FIXTURE_DIR)])
         expected = len([i for i in listdir(BAG_FIXTURE_DIR) if not i.startswith("invalid_")])
         shutil.rmtree(settings.SRC_DIR)
         shutil.copytree(BAG_FIXTURE_DIR, settings.SRC_DIR)
-        discover = BagDiscoverer().run()
+        count = 0
+        while count < total_bags:
+            discover = BagDiscoverer().run()
+            count += 1
         self.assertIsNot(False, discover)
         self.assertEqual(len(discover), expected, "Wrong number of bags processed.")
         self.assertEqual(len(Bag.objects.all()), expected, "Wrong number of bags saved in database.")
