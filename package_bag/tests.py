@@ -65,12 +65,16 @@ class TestPackage(TestCase):
 
     def test_discover_bags(self):
         """Ensures that bags are correctly discovered."""
+        total_bags = len([i for i in listdir(BAG_FIXTURE_DIR)])
         expected = len([i for i in listdir(BAG_FIXTURE_DIR) if not i.startswith("invalid_")])
         shutil.rmtree(settings.SRC_DIR)
         shutil.copytree(BAG_FIXTURE_DIR, settings.SRC_DIR)
-        discover = BagDiscoverer().run()
-        self.assertIsNot(False, discover)
-        self.assertEqual(len(discover), expected, "Wrong number of bags processed.")
+        count = 0
+        while count < (total_bags + 1):
+            discover = BagDiscoverer().run()
+            count += 1
+        self.assertTrue(isinstance(discover, tuple))
+        self.assertTupleEqual(discover, ('No bags were found.', None), "Incorrect response when no bags are found.")
         self.assertEqual(len(Bag.objects.all()), expected, "Wrong number of bags saved in database.")
         self.assertEqual(len(listdir(settings.TMP_DIR)), expected, "Invalid bags were not deleted.")
 

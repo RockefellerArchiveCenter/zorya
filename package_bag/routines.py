@@ -21,38 +21,39 @@ class BagDiscoverer(object):
     """
 
     def run(self):
-        processed = []
-        unprocessed = self.discover_bags(settings.SRC_DIR)
-        for bag in unprocessed:
-            try:
-                bag_id = self.unpack_rename(bag, settings.TMP_DIR)
-                bag_path = join(settings.TMP_DIR, bag_id)
-                validate(bag_path)
-                bag_data = self.validate_metadata(bag_path)
-                new_bag = Bag.objects.create(
-                    original_bag_name=bag,
-                    bag_identifier=bag_id,
-                    bag_path=bag_path)
-                for key in ["Origin", "Rights-ID", "End-Date"]:
-                    setattr(new_bag, key.lower().replace("-", "_"), bag_data.get(key))
-                new_bag.save()
-                processed.append(bag_id)
-            except Exception as e:
-                remove_file_or_dir(bag_path)
-                print(e)
+        try:
+            bag = self.discover_next_bag(settings.SRC_DIR)
+            if bag:
+                try:
+                    bag_id = self.unpack_rename(bag, settings.TMP_DIR)
+                    bag_path = join(settings.TMP_DIR, bag_id)
+                    validate(bag_path)
+                    bag_data = self.validate_metadata(bag_path)
+                    new_bag = Bag.objects.create(
+                        original_bag_name=bag,
+                        bag_identifier=bag_id,
+                        bag_path=bag_path)
+                    for key in ["Origin", "Rights-ID", "End-Date"]:
+                        setattr(new_bag, key.lower().replace("-", "_"), bag_data.get(key))
+                    new_bag.save()
+                except Exception as e:
+                    remove_file_or_dir(bag_path)
+                    print(e)
+        except Exception as e:
+            print(e)
         # what does this process bags function return? - you want to return something out of the view that indicates which objects were processed
         # e.g.: "{} bags discovered".format(len(processed)), processed
-        msg = "Bags discovered." if len(processed) else "No bags were found."
-        return msg, processed
+        msg = "Bag discovered." if bag else "No bags were found."
+        return (msg, bag_id) if bag else (msg, None)
 
-    def discover_bags(self, src):
+    def discover_next_bag(self, src):
         """Looks in a given directory for compressed bags, adds to list to process"""
-        bags_list = []
+        bag = None
         for bag in listdir(src):
             ext = splitext(bag)[-1]
             if ext in ['.tgz', '.gz']:
-                bags_list.append(join(src, bag))
-        return bags_list
+                bag = join(src, bag)
+        return bag
 
     def unpack_rename(self, bag_path, tmp):
         """Unpacks tarfile to a new directory with the name of the bag identifier (a UUID)"""
