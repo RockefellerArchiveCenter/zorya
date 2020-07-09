@@ -70,11 +70,11 @@ class TestPackage(TestCase):
         shutil.rmtree(settings.SRC_DIR)
         shutil.copytree(BAG_FIXTURE_DIR, settings.SRC_DIR)
         count = 0
-        while count < total_bags:
+        while count < (total_bags + 1):
             discover = BagDiscoverer().run()
             count += 1
-        self.assertIsNot(False, discover)
-        print(discover)
+        self.assertTrue(isinstance(discover, tuple))
+        self.assertTupleEqual(discover, ('No bags were found.', None), "Incorrect response when no bags are found.")
         self.assertEqual(len(Bag.objects.all()), expected, "Wrong number of bags saved in database.")
         self.assertEqual(len(listdir(settings.TMP_DIR)), expected, "Invalid bags were not deleted.")
 
