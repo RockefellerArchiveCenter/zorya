@@ -48,7 +48,7 @@ class BagDiscoverer(object):
         for bag in listdir(src):
             ext = splitext(bag)[-1]
             if ext in ['.tgz', '.gz']:
-                bags_list.append(join(src, bag))
+                bags = join(src, bag)
         return bags_list[0]
 
     def unpack_rename(self, bag_path, tmp):
