@@ -49,7 +49,7 @@ class BagDiscoverer(object):
             ext = splitext(bag)[-1]
             if ext in ['.tgz', '.gz']:
                 bags = join(src, bag)
-        return bags_list[0]
+        return bag
 
     def unpack_rename(self, bag_path, tmp):
         """Unpacks tarfile to a new directory with the name of the bag identifier (a UUID)"""
