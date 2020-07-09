@@ -74,7 +74,6 @@ class TestPackage(TestCase):
             discover = BagDiscoverer().run()
             count += 1
         self.assertIsNot(False, discover)
-        self.assertEqual(len(discover), expected, "Wrong number of bags processed.")
         self.assertEqual(len(Bag.objects.all()), expected, "Wrong number of bags saved in database.")
         self.assertEqual(len(listdir(settings.TMP_DIR)), expected, "Invalid bags were not deleted.")
 
