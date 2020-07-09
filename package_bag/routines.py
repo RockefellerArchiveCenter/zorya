@@ -44,7 +44,7 @@ class BagDiscoverer(object):
 
     def discover_next_bag(self, src):
         """Looks in a given directory for compressed bags, adds to list to process"""
-        bags_list = []
+        bag = None
         for bag in listdir(src):
             ext = splitext(bag)[-1]
             if ext in ['.tgz', '.gz']:
