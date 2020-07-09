@@ -44,7 +44,7 @@ class BagDiscoverer(object):
         # what does this process bags function return? - you want to return something out of the view that indicates which objects were processed
         # e.g.: "{} bags discovered".format(len(processed)), processed
         msg = "Bag discovered." if bag else "No bags were found."
-        return msg, bag_id if bag else msg
+        return (msg, bag_id) if bag else (msg, None)
 
     def discover_next_bag(self, src):
         """Looks in a given directory for compressed bags, adds to list to process"""
