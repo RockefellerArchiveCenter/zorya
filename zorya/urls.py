@@ -13,6 +13,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.conf.urls import url
 from django.contrib import admin
 from django.urls import include, path
 from package_bag.views import (BagDiscovererView, BagViewSet,
@@ -30,4 +31,5 @@ urlpatterns = [
     path('deliver-package', PackageDelivererView.as_view(), name="packagedeliverer"),
     path('admin/', admin.site.urls),
     path('', include(router.urls)),
+    url('status/', include('health_check.api.urls')),
 ]

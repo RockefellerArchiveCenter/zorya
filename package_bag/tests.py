@@ -135,6 +135,11 @@ class TestPackage(TestCase):
             self.assertEqual(
                 response.status_code, 200, "View error: {}".format(response.data))
 
+    def health_check(self):
+        print('*** Getting status view ***')
+        status = self.client.get(reverse('api_health_ping'))
+        self.assertEqual(status.status_code, 200, "Wrong HTTP code")
+
     def tearDown(self):
         for d in [settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR]:
             if isdir(d):
