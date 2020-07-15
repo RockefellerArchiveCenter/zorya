@@ -33,7 +33,7 @@ class BagDiscoverer(object):
                         original_bag_name=bag,
                         bag_identifier=bag_id,
                         bag_path=bag_path)
-                    for key in ["Origin", "Rights-ID", "End-Date"]:
+                    for key in ["Origin", "Rights-ID", "Start-Date", "End-Date"]:
                         setattr(new_bag, key.lower().replace("-", "_"), bag_data.get(key))
                     new_bag.save()
                 except Exception as e:
