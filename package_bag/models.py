@@ -19,6 +19,10 @@ class Bag(models.Model):
         null=True,
         blank=True)
     rights_id = JSONField(null=True, blank=True)
+    start_date = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True)
     end_date = models.CharField(
         max_length=255,
         null=True,
