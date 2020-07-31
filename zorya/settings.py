@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+
 from . import config as CF
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -38,6 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'package_bag',
+    'rest_framework',
+    'health_check',
 ]
 
 MIDDLEWARE = [
@@ -95,6 +99,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTH_USER_MODEL = 'package_bag.User'
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
@@ -120,3 +125,9 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 25,
 }
+
+SRC_DIR = CF.SRC_DIR
+TMP_DIR = CF.TMP_DIR
+DEST_DIR = CF.DEST_DIR
+
+DELIVERY_URL = CF.DELIVERY_URL

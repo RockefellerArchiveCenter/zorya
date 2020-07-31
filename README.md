@@ -27,11 +27,22 @@ Or, if you want to remove all data
 ## Services
 
 * Validate and rename bag
-* Get bag information
 * Get rights information from external service
 * Create delivery package
+* Send delivery package to an external application
 
 ### Routes
+
+
+| Method | URL | Parameters | Response  | Behavior  |
+|--------|-----|---|---|---|
+|GET|/bags| |200|Returns a list of bags|
+|GET|/bags/{id}| |200|Returns data about an individual bag|
+|POST|/discover-bags| |200|Discovers bags waiting to be processed|
+|POST|/assign-rights| |200|Fetches rights information from external service|
+|POST|/make-package| |200|Assembles a package to be delivered to an external service|
+|POST|/deliver-package| |200|Delivers package to an external service|
+
 
 ## Requirements
 
