@@ -86,12 +86,10 @@ class RightsAssigner(object):
     """Send rights IDs to external service and receive JSON in return"""
 
     def run(self):
-        url = settings.RIGHTS_URL
-        apikey = settings.RIGHTS_KEY
         bags_with_rights = []
         for bag in Bag.objects.filter(rights_data__isnull=True):
             try:
-                rights_json = self.retrieve_rights(bag, url, apikey)
+                rights_json = self.retrieve_rights(bag)
                 bag.rights_data = rights_json
                 bag.save()
                 bags_with_rights.append(bag.bag_identifier)
@@ -100,14 +98,15 @@ class RightsAssigner(object):
         msg = "Rights assigned." if len(bags_with_rights) else "No bags to assign rights to found."
         return msg, bags_with_rights
 
-    def retrieve_rights(self, bag, url, apikey):
+    def retrieve_rights(self, bag):
         """Sends POST request to rights statement service, receives JSON in return"""
+        url = settings.RIGHTS_URL
         resp = post(
             url,
             data={"identifiers": bag.rights_id, "start_date": bag.start_date, "end_date": bag.end_date},
             headers={
                 "Content-Type": "application/json",
-                "apikey": apikey,
+                "apikey": settings.RIGHTS_KEY,
             },
         )
         if resp.status_code != 200:
