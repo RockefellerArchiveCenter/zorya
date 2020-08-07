@@ -109,7 +109,7 @@ class RightsAssigner(object):
         # url for get request
         resp = post(
             url,
-            data="data",  # TO DO: what data is sent to rights service? obviously includes rights ids
+            data={"identifiers": bag.rights_id, "start_date": bag.start_date, "end_date": bag.end_date},
             headers={
                 "Content-Type": "application/json",
                 "apikey": apikey,
