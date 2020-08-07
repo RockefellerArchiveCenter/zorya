@@ -97,16 +97,11 @@ class RightsAssigner(object):
                 bags_with_rights.append(bag.bag_identifier)
             except Exception as e:
                 print(e)
-        # get rights ids from database
-        # loop through rights ids
-        # retrieve rights
-        # save rights
         msg = "Rights assigned." if len(bags_with_rights) else "No bags to assign rights to found."
         return msg, bags_with_rights
 
     def retrieve_rights(self, bag, url, apikey):
         """Sends POST request to rights statement service, receives JSON in return"""
-        # url for get request
         resp = post(
             url,
             data={"identifiers": bag.rights_id, "start_date": bag.start_date, "end_date": bag.end_date},
@@ -115,10 +110,8 @@ class RightsAssigner(object):
                 "apikey": apikey,
             },
         )
-        # send get request
-        # get serialized rights back as json
-        # QUESTION: do we want to validate the json we get back?
-        # return saved json
+        if resp.status_code != 200:
+            raise Exception("Error sending request to {}: {} {}".format(url, resp.status_code, resp.reason))
         return resp.json()
 
 
