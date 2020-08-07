@@ -86,8 +86,8 @@ class RightsAssigner(object):
     """Send rights IDs to external service and receive JSON in return"""
 
     def run(self):
-        url = "rights service url"
-        apikey = "rights service apikey"
+        url = settings.RIGHTS_URL
+        apikey = settings.RIGHTS_KEY
         bags_with_rights = []
         for bag in Bag.objects.filter(rights_data__isnull=True):
             try:

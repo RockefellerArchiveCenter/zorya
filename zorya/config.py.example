@@ -19,3 +19,5 @@ TMP_DIR = os.path.join(ROOT_DIR, "tmp")
 DEST_DIR = os.path.join(ROOT_DIR, "dest")
 
 DELIVERY_URL = 'http://ursa-major-web:8005/store-bags/'
+RIGHTS_URL = 'http://aquila-web:8000/rights'
+RIGHTS_KEY = 'dger4tgj7ilrty5547htdfnhmfk'
