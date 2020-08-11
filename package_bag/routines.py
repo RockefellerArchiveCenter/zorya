@@ -125,30 +125,22 @@ class PackageMaker(object):
         packaged = []
         unpackaged = Bag.objects.filter(rights_data__isnull=False)
         for bag in unpackaged:
+            package_root = join(settings.DEST_DIR, bag.bag_identifier)
+            package_path = "{}.tar.gz".format(package_root)
+            bag_tar_filename = "{}.tar.gz".format(bag.bag_identifier)
             try:
-                self.create_package(bag, BagSerializer(bag).data)
+                bag_json = BagSerializer(bag).data
+                mkdir(package_root)
+                with open("{}.json".format(join(package_root, bag.bag_identifier)), "w",) as f:
+                    json.dump(bag_json, f, indent=4, sort_keys=True, default=str)
+                make_tarfile(bag.bag_path, join(package_root, bag_tar_filename), remove_src=True)
+                make_tarfile(package_root, package_path, remove_src=True)
                 packaged.append(bag.bag_identifier)
             except Exception as e:
                 raise Exception(
                     "Error making package for bag {}: {}".format(bag.bag_identifier, str(e))) from e
         msg = "Packages created." if len(packaged) else "No files ready for packaging."
         return msg, packaged
-
-    # TODO: There are a number of things that need to be replaced with asterism
-    # helpers here. I'm also not sure it makes sense to delegate to this function
-    # out of the run method - I think we could just call this all within that
-    # method.
-    def create_package(self, bag, bag_json):
-        """Create package to send to Ursa Major"""
-        package_root = join(settings.DEST_DIR, bag.bag_identifier)
-        mkdir(package_root)
-        with open("{}.json".format(join(package_root, bag.bag_identifier)), "w",) as f:
-            json.dump(bag_json, f, indent=4, sort_keys=True, default=str)
-        bag_tar_filename = "{}.tar.gz".format(bag.bag_identifier)
-        make_tarfile(bag.bag_path, join(package_root, bag_tar_filename), remove_src=True)
-        package_path = "{}.tar.gz".format(package_root)
-        make_tarfile(package_root, package_path, remove_src=True)
-        return package_path
 
 
 class PackageDeliverer(object):
