@@ -19,7 +19,8 @@ from .routines import (BagDiscoverer, PackageDeliverer, PackageMaker,
 from .views import (BagDiscovererView, PackageDelivererView, PackageMakerView,
                     RightsAssignerView)
 
-BAG_FIXTURE_DIR = join(settings.BASE_DIR, 'fixtures', 'bags')
+VALID_BAG_FIXTURE_DIR = join(settings.BASE_DIR, 'fixtures', 'bags', 'valid')
+INVALID_BAG_FIXTURE_DIR = join(settings.BASE_DIR, 'fixtures', 'bags', 'invalid')
 RIGHTS_FIXTURE_DIR = join(settings.BASE_DIR, 'fixtures', 'rights')
 
 
@@ -53,8 +54,8 @@ class TestPackage(TestCase):
 
     def copy_binaries(self, dest_dir):
         shutil.rmtree(settings.SRC_DIR)
-        shutil.copytree(BAG_FIXTURE_DIR, settings.SRC_DIR)
-        binary = choice([i for i in listdir(settings.SRC_DIR) if isfile(join(settings.SRC_DIR, i)) and not i.startswith("invalid_")])
+        shutil.copytree(VALID_BAG_FIXTURE_DIR, settings.SRC_DIR)
+        binary = choice([i for i in listdir(settings.SRC_DIR) if isfile(join(settings.SRC_DIR, i))])
         for obj in Bag.objects.all():
             current_path = join(settings.SRC_DIR, "{}.tar.gz".format(obj.bag_identifier))
             shutil.copy(join(settings.SRC_DIR, binary), current_path)
@@ -65,18 +66,24 @@ class TestPackage(TestCase):
 
     def test_discover_bags(self):
         """Ensures that bags are correctly discovered."""
-        total_bags = len([i for i in listdir(BAG_FIXTURE_DIR)])
-        expected = len([i for i in listdir(BAG_FIXTURE_DIR) if not i.startswith("invalid_")])
+        valid_bags = len([i for i in listdir(VALID_BAG_FIXTURE_DIR)])
         shutil.rmtree(settings.SRC_DIR)
-        shutil.copytree(BAG_FIXTURE_DIR, settings.SRC_DIR)
+        shutil.copytree(VALID_BAG_FIXTURE_DIR, settings.SRC_DIR)
         count = 0
-        while count < (total_bags + 1):
+        while count < (valid_bags + 1):
             discover = BagDiscoverer().run()
             count += 1
         self.assertTrue(isinstance(discover, tuple))
         self.assertTupleEqual(discover, ('No bags were found.', None), "Incorrect response when no bags are found.")
-        self.assertEqual(len(Bag.objects.all()), expected, "Wrong number of bags saved in database.")
-        self.assertEqual(len(listdir(settings.TMP_DIR)), expected, "Invalid bags were not deleted.")
+        self.assertEqual(len(Bag.objects.all()), valid_bags, "Wrong number of bags saved in database.")
+        self.assertEqual(len(listdir(settings.TMP_DIR)), valid_bags, "Invalid bags were not deleted.")
+
+        shutil.rmtree(settings.SRC_DIR)
+        shutil.copytree(INVALID_BAG_FIXTURE_DIR, settings.SRC_DIR)
+        with self.assertRaises(Exception) as exc:
+            BagDiscoverer().run()
+        self.assertIn("Error processing discovered bag", str(exc.exception))
+        self.assertEqual(len(listdir(settings.TMP_DIR)), valid_bags)
 
     @patch('package_bag.routines.RightsAssigner.retrieve_rights')
     def test_get_rights(self, mock_rights):

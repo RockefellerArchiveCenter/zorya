@@ -21,29 +21,24 @@ class BagDiscoverer(object):
     """
 
     def run(self):
-        try:
-            bag = self.discover_next_bag(settings.SRC_DIR)
-            if bag:
-                try:
-                    bag_id = self.unpack_rename(bag, settings.TMP_DIR)
-                    bag_path = join(settings.TMP_DIR, bag_id)
-                    validate(bag_path)
-                    bag_data = self.validate_metadata(bag_path)
-                    new_bag = Bag.objects.create(
-                        original_bag_name=bag,
-                        bag_identifier=bag_id,
-                        bag_path=bag_path)
-                    for key in ["Origin", "Rights-ID", "Start-Date", "End-Date"]:
-                        setattr(new_bag, key.lower().replace("-", "_"), bag_data.get(key))
-                    new_bag.save()
-                except Exception as e:
-                    remove_file_or_dir(bag_path)
-                    print(e)
-        except Exception as e:
-            print(e)
-        # what does this process bags function return? - you want to return something out of the view that indicates which objects were processed
-        # e.g.: "{} bags discovered".format(len(processed)), processed
-        msg = "Bag discovered." if bag else "No bags were found."
+        bag = self.discover_next_bag(settings.SRC_DIR)
+        if bag:
+            try:
+                bag_id = self.unpack_rename(bag, settings.TMP_DIR)
+                bag_path = join(settings.TMP_DIR, bag_id)
+                validate(bag_path)
+                bag_data = self.validate_metadata(bag_path)
+                new_bag = Bag.objects.create(
+                    original_bag_name=bag,
+                    bag_identifier=bag_id,
+                    bag_path=bag_path)
+                for key in ["Origin", "Rights-ID", "Start-Date", "End-Date"]:
+                    setattr(new_bag, key.lower().replace("-", "_"), bag_data.get(key))
+                new_bag.save()
+            except Exception as e:
+                remove_file_or_dir(bag_path)
+                raise Exception("Error processing discovered bag {}: {}".format(bag, str(e))) from e
+        msg = "Bag discovered, renamed and saved." if bag else "No bags were found."
         return (msg, bag_id) if bag else (msg, None)
 
     def discover_next_bag(self, src):
@@ -71,12 +66,12 @@ class BagDiscoverer(object):
         """Validates the bag-info.txt file against the bagit profile"""
         new_bag = bagit.Bag(bag_path)
         if "BagIt-Profile-Identifier" not in new_bag.info:
-            raise Exception("No BagIt Profile to validate against")
+            raise TypeError("No BagIt Profile to validate against")
         else:
             profile = bagit_profile.Profile(
                 new_bag.info.get("BagIt-Profile-Identifier"))
             if not profile.validate(new_bag):
-                raise Exception(profile.report.errors)
+                raise TypeError(profile.report.errors)
             else:
                 return new_bag.info
 
@@ -94,7 +89,9 @@ class RightsAssigner(object):
                 bag.save()
                 bags_with_rights.append(bag.bag_identifier)
             except Exception as e:
-                print(e)
+                raise Exception(
+                    "Error assigning rights to bag {}: {}".format(bag.bag_identifier, str(e))) from e
+
         msg = "Rights assigned." if len(bags_with_rights) else "No bags to assign rights to found."
         return msg, bags_with_rights
 
@@ -121,29 +118,22 @@ class PackageMaker(object):
         packaged = []
         unpackaged = Bag.objects.filter(rights_data__isnull=False)
         for bag in unpackaged:
+            package_root = join(settings.DEST_DIR, bag.bag_identifier)
+            package_path = "{}.tar.gz".format(package_root)
+            bag_tar_filename = "{}.tar.gz".format(bag.bag_identifier)
             try:
-                self.create_package(bag, BagSerializer(bag).data)
+                bag_json = BagSerializer(bag).data
+                mkdir(package_root)
+                with open("{}.json".format(join(package_root, bag.bag_identifier)), "w",) as f:
+                    json.dump(bag_json, f, indent=4, sort_keys=True, default=str)
+                make_tarfile(bag.bag_path, join(package_root, bag_tar_filename), remove_src=True)
+                make_tarfile(package_root, package_path, remove_src=True)
                 packaged.append(bag.bag_identifier)
             except Exception as e:
-                print(e)
+                raise Exception(
+                    "Error making package for bag {}: {}".format(bag.bag_identifier, str(e))) from e
         msg = "Packages created." if len(packaged) else "No files ready for packaging."
         return msg, packaged
-
-    # TODO: There are a number of things that need to be replaced with asterism
-    # helpers here. I'm also not sure it makes sense to delegate to this function
-    # out of the run method - I think we could just call this all within that
-    # method.
-    def create_package(self, bag, bag_json):
-        """Create package to send to Ursa Major"""
-        package_root = join(settings.DEST_DIR, bag.bag_identifier)
-        mkdir(package_root)
-        with open("{}.json".format(join(package_root, bag.bag_identifier)), "w",) as f:
-            json.dump(bag_json, f, indent=4, sort_keys=True, default=str)
-        bag_tar_filename = "{}.tar.gz".format(bag.bag_identifier)
-        make_tarfile(bag.bag_path, join(package_root, bag_tar_filename), remove_src=True)
-        package_path = "{}.tar.gz".format(package_root)
-        make_tarfile(package_root, package_path, remove_src=True)
-        return package_path
 
 
 class PackageDeliverer(object):
@@ -158,7 +148,8 @@ class PackageDeliverer(object):
                 self.deliver_data(bag, dest_dir, settings.DELIVERY_URL)
                 delivered.append(bag.bag_identifier)
             except Exception as e:
-                print(e)
+                raise Exception(
+                    "Error delivering bag {}: {}".format(bag.bag_identifier, str(e))) from e
         msg = "Packages delivered." if len(delivered) else "No packages to deliver."
         return msg, delivered
 
