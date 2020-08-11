@@ -1,5 +1,3 @@
-import os
-
 SECRET_KEY = 'ny033+z#r)$cpjl9gnbi*v=p8rjl2(%3-f&*v(mhi4#^eur9u8'
 DEBUG = True
 ALLOWED_HOSTS = ['localhost', 'zorya-web']
@@ -13,9 +11,11 @@ DATABASES = {
     }
 }
 
-ROOT_DIR = ''
-SRC_DIR = os.path.join(ROOT_DIR, "src")
-TMP_DIR = os.path.join(ROOT_DIR, "tmp")
-DEST_DIR = os.path.join(ROOT_DIR, "dest")
+BASE_DIR = ''
+SRC_DIR = '{}/src_dir'.format(BASE_DIR)
+TMP_DIR = '{}/tmp_dir'.format(BASE_DIR)
+DEST_DIR = '{}/dest_dir'.format(BASE_DIR)
 
 DELIVERY_URL = 'http://ursa-major-web:8005/store-bags/'
+RIGHTS_URL = 'http://aquila-web:8000/rights'
+RIGHTS_KEY = 'dger4tgj7ilrty5547htdfnhmfk'

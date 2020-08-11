@@ -81,40 +81,33 @@ class RightsAssigner(object):
     """Send rights IDs to external service and receive JSON in return"""
 
     def run(self):
-        url = "rights service url"
-        apikey = "rights service apikey"
         bags_with_rights = []
         for bag in Bag.objects.filter(rights_data__isnull=True):
             try:
-                rights_json = self.retrieve_rights(bag, url, apikey)
+                rights_json = self.retrieve_rights(bag)
                 bag.rights_data = rights_json
                 bag.save()
                 bags_with_rights.append(bag.bag_identifier)
             except Exception as e:
                 raise Exception(
                     "Error assigning rights to bag {}: {}".format(bag.bag_identifier, str(e))) from e
-        # get rights ids from database
-        # loop through rights ids
-        # retrieve rights
-        # save rights
+
         msg = "Rights assigned." if len(bags_with_rights) else "No bags to assign rights to found."
         return msg, bags_with_rights
 
-    def retrieve_rights(self, bag, url, apikey):
+    def retrieve_rights(self, bag):
         """Sends POST request to rights statement service, receives JSON in return"""
-        # url for get request
+        url = settings.RIGHTS_URL
         resp = post(
             url,
-            data="data",  # TO DO: what data is sent to rights service? obviously includes rights ids
+            data={"identifiers": bag.rights_id, "start_date": bag.start_date, "end_date": bag.end_date},
             headers={
                 "Content-Type": "application/json",
-                "apikey": apikey,
+                "apikey": settings.RIGHTS_KEY,
             },
         )
-        # send get request
-        # get serialized rights back as json
-        # QUESTION: do we want to validate the json we get back?
-        # return saved json
+        if resp.status_code != 200:
+            raise Exception("Error sending request to {}: {} {}".format(url, resp.status_code, resp.reason))
         return resp.json()
 
 
