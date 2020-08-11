@@ -21,29 +21,24 @@ class BagDiscoverer(object):
     """
 
     def run(self):
-        try:
-            bag = self.discover_next_bag(settings.SRC_DIR)
-            if bag:
-                try:
-                    bag_id = self.unpack_rename(bag, settings.TMP_DIR)
-                    bag_path = join(settings.TMP_DIR, bag_id)
-                    validate(bag_path)
-                    bag_data = self.validate_metadata(bag_path)
-                    new_bag = Bag.objects.create(
-                        original_bag_name=bag,
-                        bag_identifier=bag_id,
-                        bag_path=bag_path)
-                    for key in ["Origin", "Rights-ID", "Start-Date", "End-Date"]:
-                        setattr(new_bag, key.lower().replace("-", "_"), bag_data.get(key))
-                    new_bag.save()
-                except Exception as e:
-                    remove_file_or_dir(bag_path)
-                    print(e)
-        except Exception as e:
-            print(e)
-        # what does this process bags function return? - you want to return something out of the view that indicates which objects were processed
-        # e.g.: "{} bags discovered".format(len(processed)), processed
-        msg = "Bag discovered." if bag else "No bags were found."
+        bag = self.discover_next_bag(settings.SRC_DIR)
+        if bag:
+            try:
+                bag_id = self.unpack_rename(bag, settings.TMP_DIR)
+                bag_path = join(settings.TMP_DIR, bag_id)
+                validate(bag_path)
+                bag_data = self.validate_metadata(bag_path)
+                new_bag = Bag.objects.create(
+                    original_bag_name=bag,
+                    bag_identifier=bag_id,
+                    bag_path=bag_path)
+                for key in ["Origin", "Rights-ID", "Start-Date", "End-Date"]:
+                    setattr(new_bag, key.lower().replace("-", "_"), bag_data.get(key))
+                new_bag.save()
+            except Exception as e:
+                remove_file_or_dir(bag_path)
+                raise Exception("Error processing discovered bag {}: {}".format(bag, str(e))) from e
+        msg = "Bag discovered, renamed and saved." if bag else "No bags were found."
         return (msg, bag_id) if bag else (msg, None)
 
     def discover_next_bag(self, src):
@@ -71,12 +66,12 @@ class BagDiscoverer(object):
         """Validates the bag-info.txt file against the bagit profile"""
         new_bag = bagit.Bag(bag_path)
         if "BagIt-Profile-Identifier" not in new_bag.info:
-            raise Exception("No BagIt Profile to validate against")
+            raise TypeError("No BagIt Profile to validate against")
         else:
             profile = bagit_profile.Profile(
                 new_bag.info.get("BagIt-Profile-Identifier"))
             if not profile.validate(new_bag):
-                raise Exception(profile.report.errors)
+                raise TypeError(profile.report.errors)
             else:
                 return new_bag.info
 
@@ -96,7 +91,8 @@ class RightsAssigner(object):
                 bag.save()
                 bags_with_rights.append(bag.bag_identifier)
             except Exception as e:
-                print(e)
+                raise Exception(
+                    "Error assigning rights to bag {}: {}".format(bag.bag_identifier, str(e))) from e
         # get rights ids from database
         # loop through rights ids
         # retrieve rights
@@ -133,7 +129,8 @@ class PackageMaker(object):
                 self.create_package(bag, BagSerializer(bag).data)
                 packaged.append(bag.bag_identifier)
             except Exception as e:
-                print(e)
+                raise Exception(
+                    "Error making package for bag {}: {}".format(bag.bag_identifier, str(e))) from e
         msg = "Packages created." if len(packaged) else "No files ready for packaging."
         return msg, packaged
 
@@ -166,7 +163,8 @@ class PackageDeliverer(object):
                 self.deliver_data(bag, dest_dir, settings.DELIVERY_URL)
                 delivered.append(bag.bag_identifier)
             except Exception as e:
-                print(e)
+                raise Exception(
+                    "Error delivering bag {}: {}".format(bag.bag_identifier, str(e))) from e
         msg = "Packages delivered." if len(delivered) else "No packages to deliver."
         return msg, delivered
 
