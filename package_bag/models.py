@@ -1,5 +1,4 @@
 from django.contrib.auth.models import AbstractUser
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 
 # TO DO: make fields nullable and blank
@@ -18,7 +17,7 @@ class Bag(models.Model):
         choices=ORIGIN_CHOICES,
         null=True,
         blank=True)
-    rights_id = JSONField(null=True, blank=True)
+    rights_id = models.JSONField(null=True, blank=True)
     start_date = models.CharField(
         max_length=255,
         null=True,
@@ -27,7 +26,7 @@ class Bag(models.Model):
         max_length=255,
         null=True,
         blank=True)
-    rights_data = JSONField(null=True, blank=True)
+    rights_data = models.JSONField(null=True, blank=True)
     created = models.DateTimeField(auto_now=True)
     last_modified = models.DateTimeField(auto_now_add=True)
 
