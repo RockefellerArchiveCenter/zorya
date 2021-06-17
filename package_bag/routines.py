@@ -1,7 +1,7 @@
 import json
 import tarfile
 from os import listdir, mkdir, remove, rename
-from os.path import join, splitext
+from os.path import isdir, join, splitext
 from uuid import uuid4
 
 import bagit
@@ -20,12 +20,20 @@ class BagDiscoverer(object):
     Validates bag structure and bag info file, renames bag with unique ID
     """
 
+    def __init__(self):
+        self.src_dir = settings.SRC_DIR
+        self.tmp_dir = settings.TMP_DIR
+        for dir in [join(settings.BASE_DIR, self.src_dir),
+                    join(settings.BASE_DIR, self.tmp_dir)]:
+            if not isdir(dir):
+                raise Exception("Directory does not exist", dir)
+
     def run(self):
-        bag = self.discover_next_bag(settings.SRC_DIR)
+        bag = self.discover_next_bag(self.src_dir)
         if bag:
             try:
-                bag_id = self.unpack_rename(bag, settings.TMP_DIR)
-                bag_path = join(settings.TMP_DIR, bag_id)
+                bag_id = self.unpack_rename(bag, self.tmp_dir)
+                bag_path = join(self.tmp_dir, bag_id)
                 validate(bag_path)
                 bag_data = self.validate_metadata(bag_path)
                 new_bag = Bag.objects.create(
