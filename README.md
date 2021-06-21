@@ -14,7 +14,7 @@ Install [Docker](https://store.docker.com/search?type=edition&offering=community
     $ cd zorya
     $ docker-compose up
 
-Once the application starts successfully, you should be able to access the application in your browser at `http://localhost:8005`
+Once the application starts successfully, you should be able to access the application in your browser at `http://localhost:8011`
 
 When you're done, shut down docker-compose
 
