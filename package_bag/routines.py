@@ -23,8 +23,7 @@ class BagDiscoverer(object):
     def __init__(self):
         self.src_dir = settings.SRC_DIR
         self.tmp_dir = settings.TMP_DIR
-        for dir in [join(settings.BASE_DIR, self.src_dir),
-                    join(settings.BASE_DIR, self.tmp_dir)]:
+        for dir in [self.src_dir, self.tmp_dir]:
             if not isdir(dir):
                 raise Exception("Directory does not exist", dir)
 
