@@ -107,11 +107,7 @@ class RightsAssigner(object):
         url = settings.RIGHTS_URL
         resp = post(
             url,
-            json={"identifiers": bag.rights_id, "start_date": bag.start_date, "end_date": bag.end_date},
-            headers={
-                "Content-Type": "application/json",
-                "apikey": settings.RIGHTS_KEY,
-            },
+            json={"identifiers": bag.rights_id, "start_date": bag.start_date, "end_date": bag.end_date}
         )
         if resp.status_code != 200:
             raise Exception("Error sending request to {}: {} {}".format(url, resp.status_code, resp.reason))
