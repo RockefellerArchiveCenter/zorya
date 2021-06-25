@@ -107,7 +107,7 @@ class RightsAssigner(object):
         url = settings.RIGHTS_URL
         resp = post(
             url,
-            data={"identifiers": bag.rights_id, "start_date": bag.start_date, "end_date": bag.end_date},
+            json={"identifiers": bag.rights_id, "start_date": bag.start_date, "end_date": bag.end_date},
             headers={
                 "Content-Type": "application/json",
                 "apikey": settings.RIGHTS_KEY,
