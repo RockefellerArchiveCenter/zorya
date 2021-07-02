@@ -22,10 +22,8 @@ chardet==4.0.0
 clinner==1.12.3
     # via health-check
 colorlog==3.2.0
-    # via
-    #   -r requirements.in
-    #   clinner
-django==3.2.4
+    # via clinner
+django==3.2.5
     # via
     #   -r requirements.in
     #   asterism
