@@ -30,7 +30,7 @@ django==3.2.4
     #   -r requirements.in
     #   asterism
     #   djangorestframework
-djangorestframework==3.11.2
+djangorestframework==3.12.4
     # via
     #   -r requirements.in
     #   asterism
