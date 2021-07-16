@@ -163,9 +163,9 @@ class PackageDeliverer(object):
         r = post(
             url,
             json={
-                "bag_data": bag_data,
+                "data": bag_data,
                 "origin": bag.origin,
-                "identifier": bag.bag_identifier},
+                "bag_identifier": bag.bag_identifier},
             headers={
                 "Content-Type": "application/json"},
         )
