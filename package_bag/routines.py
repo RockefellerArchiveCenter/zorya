@@ -26,6 +26,7 @@ class BagDiscoverer(object):
         for dir in [self.src_dir, self.tmp_dir]:
             if not isdir(dir):
                 raise Exception("Directory does not exist", dir)
+        # TODO: check for json profile
 
     def run(self):
         bag = self.discover_next_bag(self.src_dir)
@@ -72,15 +73,13 @@ class BagDiscoverer(object):
     def validate_metadata(self, bag_path):
         """Validates the bag-info.txt file against the bagit profile"""
         new_bag = bagit.Bag(bag_path)
-        if "BagIt-Profile-Identifier" not in new_bag.info:
-            raise TypeError("No BagIt Profile to validate against")
+        with open("/code/package_bag/zorya_bagit_profile.json", "r") as fp:
+            data = json.load(fp)
+        profile = bagit_profile.Profile("zorya_bagit_profile.json", profile=data)
+        if not profile.validate(new_bag):
+            raise TypeError(profile.report.errors)
         else:
-            profile = bagit_profile.Profile(
-                new_bag.info.get("BagIt-Profile-Identifier"))
-            if not profile.validate(new_bag):
-                raise TypeError(profile.report.errors)
-            else:
-                return new_bag.info
+            return new_bag.info
 
 
 # how does something get sent from one bag to another? how does batching work?
