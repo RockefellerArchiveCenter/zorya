@@ -10,6 +10,7 @@ from uuid import uuid4
 
 from django.test import TestCase
 from django.urls import reverse
+from rac_schemas import is_valid
 from rest_framework.test import APIRequestFactory
 from zorya import settings
 
@@ -116,6 +117,17 @@ class TestPackage(TestCase):
                 self.assertEqual(
                     set(expected), set(names),
                     "Incorrectly structured package: expected {} but got {}".format(expected, names))
+
+    def test_serialize_json(self):
+        """Ensures that valid JSON is created"""
+        self.add_bags_to_db(self.expected_count, rights_data=self.rights_json)
+        self.copy_binaries(settings.TMP_DIR)
+        for bag in Bag.objects.filter(rights_data__isnull=False):
+            package_root = join(settings.DEST_DIR, bag.bag_identifier)
+            PackageMaker().serialize_json(bag, package_root)
+            with open("{}.json".format(join(package_root, bag.bag_identifier)), "r") as f:
+                serialized = json.load(f)
+            self.assertTrue(is_valid(serialized, "{}_bag".format(bag.origin)))
 
     @patch('package_bag.routines.post')
     def test_deliver_package(self, mock_post):

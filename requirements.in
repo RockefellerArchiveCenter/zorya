@@ -4,3 +4,4 @@ bagit-profile==1.3.1
 Django==3.2.5
 djangorestframework==3.12.4
 health-check==3.4.1
+rac_schemas==0.26

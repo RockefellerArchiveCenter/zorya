@@ -135,7 +135,7 @@ class PackageMaker(object):
         return msg, packaged
 
     def serialize_json(self, bag, package_root):
-        """docstring for serialize_json"""
+        """Serialize JSON to file"""
         bag_json = BagSerializer(bag).data
         mkdir(package_root)
         with open("{}.json".format(join(package_root, bag.bag_identifier)), "w",) as f:
