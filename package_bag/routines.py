@@ -124,10 +124,7 @@ class PackageMaker(object):
             package_path = "{}.tar.gz".format(package_root)
             bag_tar_filename = "{}.tar.gz".format(bag.bag_identifier)
             try:
-                bag_json = BagSerializer(bag).data
-                mkdir(package_root)
-                with open("{}.json".format(join(package_root, bag.bag_identifier)), "w",) as f:
-                    json.dump(bag_json, f, indent=4, sort_keys=True, default=str)
+                self.serialize_json(bag, package_root)
                 make_tarfile(bag.bag_path, join(package_root, bag_tar_filename), remove_src=True)
                 make_tarfile(package_root, package_path, remove_src=True)
                 packaged.append(bag.bag_identifier)
@@ -136,6 +133,13 @@ class PackageMaker(object):
                     "Error making package for bag {}: {}".format(bag.bag_identifier, str(e))) from e
         msg = "Packages created." if len(packaged) else "No files ready for packaging."
         return msg, packaged
+
+    def serialize_json(self, bag, package_root):
+        """docstring for serialize_json"""
+        bag_json = BagSerializer(bag).data
+        mkdir(package_root)
+        with open("{}.json".format(join(package_root, bag.bag_identifier)), "w",) as f:
+            json.dump(bag_json, f, indent=4, sort_keys=True, default=str)
 
 
 class PackageDeliverer(object):
