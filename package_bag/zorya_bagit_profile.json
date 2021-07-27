@@ -1,6 +1,6 @@
 {
      "BagIt-Profile-Info":{
-      "BagIt-Profile-Identifier":"https://gist.githubusercontent.com/bonniegee/a78e7c2df89fa9bef8584efd97984624/raw/856bbd57c8ca7e638fde768fbabc116ecd79bfd3/test_bagit_profile_for_zorya",
+      "BagIt-Profile-Identifier":"zorya_bagit_profile.json",
       "Source-Organization":"Rockarch.org",
       "Contact-Name":"Bonnie Gordon",
       "Contact-Email":"bgordon@rockarch.org",
