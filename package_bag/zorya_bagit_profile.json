@@ -1,9 +1,8 @@
 {
      "BagIt-Profile-Info":{
       "BagIt-Profile-Identifier":"zorya_bagit_profile.json",
-      "Source-Organization":"Rockarch.org",
-      "Contact-Name":"Bonnie Gordon",
-      "Contact-Email":"bgordon@rockarch.org",
+      "Source-Organization":"Rockefeller Archive Center",
+      "Contact-Email":"archive@rockarch.org",
       "External-Description":"BagIt profile for digitized and legacy born digital bags",
       "Version":"1.4"
    },
