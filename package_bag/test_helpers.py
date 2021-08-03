@@ -10,6 +10,7 @@ from .routines import BagDiscoverer
 
 
 def add_bags_to_db(tmp_dir, count=5, rights_data=None):
+    '''Adds "count" bags to the database, optionally including rights JSON'''
     for n in range(count):
         bag_id = str(uuid4())
         Bag.objects.create(
@@ -25,6 +26,7 @@ def add_bags_to_db(tmp_dir, count=5, rights_data=None):
 
 
 def copy_binaries(bag_fixture_dir, dest_dir):
+    '''Copies files from a directory of compressed bags to a destination'''
     shutil.rmtree(dest_dir)
     shutil.copytree(bag_fixture_dir, dest_dir)
     binary = choice([i for i in listdir(dest_dir) if isfile(join(dest_dir, i))])
@@ -38,6 +40,7 @@ def copy_binaries(bag_fixture_dir, dest_dir):
 
 
 def set_up_directories(directories):
+    '''For a list of directories, deletes directory if it exists and creates a directory'''
     for d in directories:
         if isdir(d):
             shutil.rmtree(d)
