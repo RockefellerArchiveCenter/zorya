@@ -111,7 +111,7 @@ class RightsAssigner(object):
         )
         if resp.status_code != 200:
             raise Exception("Error sending request to {}: {} {}".format(url, resp.status_code, resp.reason))
-        return resp.json()
+        return resp.json()['rights_statements']
 
 
 class PackageMaker(object):
