@@ -73,9 +73,10 @@ class BagDiscoverer(object):
     def validate_metadata(self, bag_path):
         """Validates the bag-info.txt file against the bagit profile"""
         new_bag = bagit.Bag(bag_path)
-        with open("/code/package_bag/zorya_bagit_profile.json", "r") as fp:
+        bagit_profile_json = "zorya_bagit_profile.json"
+        with open(join(settings.BASE_DIR, "package_bag", bagit_profile_json), "r") as fp:
             data = json.load(fp)
-        profile = bagit_profile.Profile("zorya_bagit_profile.json", profile=data)
+        profile = bagit_profile.Profile(bagit_profile_json, profile=data)
         if not profile.validate(new_bag):
             raise TypeError(profile.report.errors)
         else:
