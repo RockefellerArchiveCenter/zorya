@@ -7,7 +7,7 @@ class BagSerializer(serializers.ModelSerializer):
     """Serializer for Digitization Bags"""
 
     identifier = serializers.CharField(source="bag_identifier")
-    rights_statements = serializers.CharField(source="rights_data")
+    rights_statements = serializers.JSONField(source="rights_data")
     # rights_statements = serializers.SerializerMethodField(source="rights_data")
 
     class Meta:
