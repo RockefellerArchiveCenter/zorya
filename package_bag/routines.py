@@ -26,6 +26,7 @@ class BagDiscoverer(object):
         for dir in [self.src_dir, self.tmp_dir]:
             if not isdir(dir):
                 raise Exception("Directory does not exist", dir)
+        # TODO: check for json profile
 
     def run(self):
         bag = self.discover_next_bag(self.src_dir)
@@ -72,15 +73,14 @@ class BagDiscoverer(object):
     def validate_metadata(self, bag_path):
         """Validates the bag-info.txt file against the bagit profile"""
         new_bag = bagit.Bag(bag_path)
-        if "BagIt-Profile-Identifier" not in new_bag.info:
-            raise TypeError("No BagIt Profile to validate against")
+        bagit_profile_json = "zorya_bagit_profile.json"
+        with open(join(settings.BASE_DIR, "package_bag", bagit_profile_json), "r") as fp:
+            data = json.load(fp)
+        profile = bagit_profile.Profile(bagit_profile_json, profile=data)
+        if not profile.validate(new_bag):
+            raise TypeError(profile.report.errors)
         else:
-            profile = bagit_profile.Profile(
-                new_bag.info.get("BagIt-Profile-Identifier"))
-            if not profile.validate(new_bag):
-                raise TypeError(profile.report.errors)
-            else:
-                return new_bag.info
+            return new_bag.info
 
 
 # how does something get sent from one bag to another? how does batching work?
@@ -111,7 +111,7 @@ class RightsAssigner(object):
         )
         if resp.status_code != 200:
             raise Exception("Error sending request to {}: {} {}".format(url, resp.status_code, resp.reason))
-        return resp.json()
+        return resp.json()['rights_statements']
 
 
 class PackageMaker(object):
@@ -125,10 +125,7 @@ class PackageMaker(object):
             package_path = "{}.tar.gz".format(package_root)
             bag_tar_filename = "{}.tar.gz".format(bag.bag_identifier)
             try:
-                bag_json = BagSerializer(bag).data
-                mkdir(package_root)
-                with open("{}.json".format(join(package_root, bag.bag_identifier)), "w",) as f:
-                    json.dump(bag_json, f, indent=4, sort_keys=True, default=str)
+                self.serialize_json(bag, package_root)
                 make_tarfile(bag.bag_path, join(package_root, bag_tar_filename), remove_src=True)
                 make_tarfile(package_root, package_path, remove_src=True)
                 packaged.append(bag.bag_identifier)
@@ -137,6 +134,13 @@ class PackageMaker(object):
                     "Error making package for bag {}: {}".format(bag.bag_identifier, str(e))) from e
         msg = "Packages created." if len(packaged) else "No files ready for packaging."
         return msg, packaged
+
+    def serialize_json(self, bag, package_root):
+        """Serialize JSON to file"""
+        bag_json = BagSerializer(bag).data
+        mkdir(package_root)
+        with open("{}.json".format(join(package_root, bag.bag_identifier)), "w",) as f:
+            json.dump(bag_json, f, indent=4, sort_keys=True, default=str)
 
 
 class PackageDeliverer(object):

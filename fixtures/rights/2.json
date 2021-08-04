@@ -1,45 +1,28 @@
-{
-    "rights_statements": [
+[
         {
-            "note": "Records embargoed for 10 years after date of creation.",
-            "other_rights_basis": "Donor",
-            "end_date": "2011-06-30",
-            "rights_granted": [
-                {
-                    "act": "disseminate",
-                    "start_date": "1982-07-06",
-                    "end_date": "2011-06-30",
-                    "note": "Records are open for research after expiration of embargo period.",
-                    "restriction": "disallow"
-                },
-                {
-                    "act": "disseminate",
-                    "start_date": "1992-07-06",
-                    "end_date": "2001-06-30",
-                    "note": "Records are open for research after expiration of embargo period.",
-                    "restriction": "allow"
-                }
-            ],
-            "rights_basis": "Other",
-            "start_date": "1982-07-06"
-        },
-        {
-            "status": "copyrighted",
-            "end_date": "2041-06-29",
-            "rights_basis": "Copyright",
-            "jurisdiction": "us",
-            "note": "Work for hire, under copyright until 40 years after creation.",
+            "rights_basis": "other",
+            "start_date": "2021-01-01",
+            "end_date": null,
+            "note": "These materials have an online embargo period of 50 years.",
             "rights_granted": [
                 {
                     "act": "publish",
-                    "start_date": "1982-07-06",
-                    "end_date": "2041-06-29",
-                    "note": "Records under copyright may not be republished without permission from the copyright holder.",
-                    "restriction": "disallow"
+                    "grant_restriction": "disallow",
+                    "start_date": "1890-05-01",
+                    "end_date": "1940-05-31",
+                    "note": ""
                 }
             ],
-            "determination_date": "2018-09-18",
-            "start_date": "1982-07-06"
+            "other_basis": "policy"
+        },
+        {
+            "rights_basis": "copyright",
+            "start_date": "2010-05-01",
+            "end_date": null,
+            "note": "Copyright term has expired.",
+            "rights_granted": [],
+            "determination_date": "2021-08-02",
+            "jurisdiction": "us",
+            "copyright_status": "public domain"
         }
     ]
-}

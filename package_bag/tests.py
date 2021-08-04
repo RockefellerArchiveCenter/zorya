@@ -1,21 +1,21 @@
 import json
 import shutil
 import tarfile
-from datetime import datetime
-from os import listdir, makedirs
-from os.path import isdir, isfile, join
-from random import choice, randint
+from os import listdir
+from os.path import isdir, join
+from random import randint
 from unittest.mock import patch
-from uuid import uuid4
 
 from django.test import TestCase
 from django.urls import reverse
+from rac_schemas import is_valid
 from rest_framework.test import APIRequestFactory
 from zorya import settings
 
 from .models import Bag
 from .routines import (BagDiscoverer, PackageDeliverer, PackageMaker,
                        RightsAssigner)
+from .test_helpers import add_bags_to_db, copy_binaries, set_up_directories
 from .views import (BagDiscovererView, PackageDelivererView, PackageMakerView,
                     RightsAssignerView)
 
@@ -27,42 +27,10 @@ RIGHTS_FIXTURE_DIR = join(settings.BASE_DIR, 'fixtures', 'rights')
 class TestPackage(TestCase):
 
     def setUp(self):
-        self.factory = APIRequestFactory()
         self.expected_count = randint(1, 10)
         with open(join(RIGHTS_FIXTURE_DIR, '1.json')) as json_file:
             self.rights_json = json.load(json_file)
-        for d in [settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR]:
-            if isdir(d):
-                shutil.rmtree(d)
-                makedirs(d)
-            else:
-                makedirs(d)
-
-    def add_bags_to_db(self, count=5, rights_data=None):
-        for n in range(count):
-            bag_id = str(uuid4())
-            Bag.objects.create(
-                original_bag_name=bag_id,
-                bag_identifier=bag_id,
-                bag_path=join(
-                    settings.TMP_DIR,
-                    bag_id),
-                origin="digitization",
-                rights_id="1 2 3",
-                rights_data=rights_data,
-                end_date=datetime.now().strftime("%Y-%m-%d"))
-
-    def copy_binaries(self, dest_dir):
-        shutil.rmtree(settings.SRC_DIR)
-        shutil.copytree(VALID_BAG_FIXTURE_DIR, settings.SRC_DIR)
-        binary = choice([i for i in listdir(settings.SRC_DIR) if isfile(join(settings.SRC_DIR, i))])
-        for obj in Bag.objects.all():
-            current_path = join(settings.SRC_DIR, "{}.tar.gz".format(obj.bag_identifier))
-            shutil.copy(join(settings.SRC_DIR, binary), current_path)
-            bag_id = BagDiscoverer().unpack_rename(current_path, settings.TMP_DIR)
-            obj.bag_identifier = bag_id
-            obj.bag_path = join(settings.TMP_DIR, bag_id)
-            obj.save()
+        set_up_directories([settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR])
 
     def test_discover_bags(self):
         """Ensures that bags are correctly discovered."""
@@ -88,7 +56,7 @@ class TestPackage(TestCase):
     @patch('package_bag.routines.RightsAssigner.retrieve_rights')
     def test_get_rights(self, mock_rights):
         """Ensures that rights are correctly retrieved and assigned."""
-        self.add_bags_to_db(self.expected_count)
+        add_bags_to_db(settings.TMP_DIR, self.expected_count)
         mock_rights.return_value = self.rights_json
         assign_rights = RightsAssigner().run()
         self.assertIsNot(False, assign_rights)
@@ -98,8 +66,8 @@ class TestPackage(TestCase):
 
     def test_create_package(self):
         """Ensures that packages are correctly created."""
-        self.add_bags_to_db(self.expected_count, rights_data=self.rights_json)
-        self.copy_binaries(settings.TMP_DIR)
+        add_bags_to_db(settings.TMP_DIR, self.expected_count, rights_data=self.rights_json)
+        copy_binaries(VALID_BAG_FIXTURE_DIR, settings.SRC_DIR)
         create_package = PackageMaker().run()
         self.assertIsNot(False, create_package)
         self.assertEqual(
@@ -117,11 +85,22 @@ class TestPackage(TestCase):
                     set(expected), set(names),
                     "Incorrectly structured package: expected {} but got {}".format(expected, names))
 
+    def test_serialize_json(self):
+        """Ensures that valid JSON is created"""
+        add_bags_to_db(settings.TMP_DIR, self.expected_count, rights_data=self.rights_json)
+        copy_binaries(VALID_BAG_FIXTURE_DIR, settings.TMP_DIR)
+        for bag in Bag.objects.filter(rights_data__isnull=False):
+            package_root = join(settings.DEST_DIR, bag.bag_identifier)
+            PackageMaker().serialize_json(bag, package_root)
+            with open("{}.json".format(join(package_root, bag.bag_identifier)), "r") as f:
+                serialized = json.load(f)
+            self.assertTrue(is_valid(serialized, "{}_bag".format(bag.origin)))
+
     @patch('package_bag.routines.post')
     def test_deliver_package(self, mock_post):
         """Ensures that packages are delivered correctly."""
-        self.add_bags_to_db(self.expected_count, rights_data=self.rights_json)
-        self.copy_binaries(settings.DEST_DIR)
+        add_bags_to_db(settings.TMP_DIR, self.expected_count, rights_data=self.rights_json)
+        copy_binaries(VALID_BAG_FIXTURE_DIR, settings.TMP_DIR)
         deliver_package = PackageDeliverer().run()
         self.assertIsNot(False, deliver_package)
         self.assertEqual(
@@ -131,7 +110,18 @@ class TestPackage(TestCase):
             mock_post.call_count, self.expected_count,
             "Incorrect number of update requests made.")
 
-    def test_views(self):
+    def tearDown(self):
+        for d in [settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR]:
+            if isdir(d):
+                shutil.rmtree(d)
+
+
+class TestViews(TestCase):
+    def setUp(self):
+        self.factory = APIRequestFactory()
+        set_up_directories([settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR])
+
+    def test_routine_views(self):
         for view_str, view in [
                 ("bagdiscoverer", BagDiscovererView),
                 ("rightsassigner", RightsAssignerView),
@@ -142,12 +132,6 @@ class TestPackage(TestCase):
             self.assertEqual(
                 response.status_code, 200, "View error: {}".format(response.data))
 
-    def health_check(self):
-        print('*** Getting status view ***')
+    def test_health_check_view(self):
         status = self.client.get(reverse('api_health_ping'))
         self.assertEqual(status.status_code, 200, "Wrong HTTP code")
-
-    def tearDown(self):
-        for d in [settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR]:
-            if isdir(d):
-                shutil.rmtree(d)
