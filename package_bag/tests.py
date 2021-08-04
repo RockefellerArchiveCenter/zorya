@@ -121,7 +121,7 @@ class TestViews(TestCase):
         self.factory = APIRequestFactory()
         set_up_directories([settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR])
 
-    def test_views(self):
+    def test_routine_views(self):
         for view_str, view in [
                 ("bagdiscoverer", BagDiscovererView),
                 ("rightsassigner", RightsAssignerView),
@@ -132,6 +132,6 @@ class TestViews(TestCase):
             self.assertEqual(
                 response.status_code, 200, "View error: {}".format(response.data))
 
-    def test_health_check(self):
+    def test_health_check_view(self):
         status = self.client.get(reverse('api_health_ping'))
         self.assertEqual(status.status_code, 200, "Wrong HTTP code")
