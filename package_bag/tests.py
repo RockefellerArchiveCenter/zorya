@@ -132,7 +132,6 @@ class TestViews(TestCase):
             self.assertEqual(
                 response.status_code, 200, "View error: {}".format(response.data))
 
-    def health_check(self):
-        print('*** Getting status view ***')
+    def test_health_check(self):
         status = self.client.get(reverse('api_health_ping'))
         self.assertEqual(status.status_code, 200, "Wrong HTTP code")
