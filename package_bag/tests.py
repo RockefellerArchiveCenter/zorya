@@ -28,8 +28,10 @@ class TestPackage(TestCase):
 
     def setUp(self):
         self.expected_count = randint(1, 10)
-        with open(join(RIGHTS_FIXTURE_DIR, '1.json')) as json_file:
+        with open(join(RIGHTS_FIXTURE_DIR, 'rights_data.json')) as json_file:
             self.rights_json = json.load(json_file)
+        with open(join(RIGHTS_FIXTURE_DIR, 'rights_service_response.json')) as json_file:
+            self.rights_service_response = json.load(json_file)
         set_up_directories([settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR])
 
     def test_discover_bags(self):
@@ -53,16 +55,21 @@ class TestPackage(TestCase):
         self.assertIn("Error processing discovered bag", str(exc.exception))
         self.assertEqual(len(listdir(settings.TMP_DIR)), valid_bags)
 
-    @patch('package_bag.routines.RightsAssigner.retrieve_rights')
+    @patch('package_bag.routines.post')
     def test_get_rights(self, mock_rights):
         """Ensures that rights are correctly retrieved and assigned."""
         add_bags_to_db(settings.TMP_DIR, self.expected_count)
-        mock_rights.return_value = self.rights_json
+        mock_rights.return_value.status_code = 200
+        mock_rights.return_value.json.return_value = self.rights_service_response
         assign_rights = RightsAssigner().run()
         self.assertIsNot(False, assign_rights)
-        self.assertEqual(mock_rights.call_count, self.expected_count, "Incorrect number of calls to rights service.")
+        self.assertEqual(
+            mock_rights.call_count, self.expected_count,
+            "Incorrect number of calls to rights service.")
         for obj in Bag.objects.all():
-            self.assertEqual(obj.rights_data, self.rights_json, "Rights JSON was not correctly added to bag in database.")
+            self.assertEqual(
+                obj.rights_data, self.rights_service_response["rights_statements"],
+                "Rights JSON was not correctly added to bag in database.")
 
     def test_create_package(self):
         """Ensures that packages are correctly created."""
