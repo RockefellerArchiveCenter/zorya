@@ -39,7 +39,8 @@ class BagDiscoverer(object):
                 new_bag = Bag.objects.create(
                     original_bag_name=bag,
                     bag_identifier=bag_id,
-                    bag_path=bag_path)
+                    bag_path=bag_path,
+                    process_status=Bag.DISCOVERED)
                 for key in ["Origin", "Rights-ID", "Start-Date", "End-Date"]:
                     setattr(new_bag, key.lower().replace("-", "_"), bag_data.get(key))
                 new_bag.save()
@@ -89,10 +90,11 @@ class RightsAssigner(object):
 
     def run(self):
         bags_with_rights = []
-        for bag in Bag.objects.filter(rights_data__isnull=True):
+        for bag in Bag.objects.filter(process_status=Bag.DISCOVERED):
             try:
                 rights_json = self.retrieve_rights(bag)
                 bag.rights_data = rights_json
+                bag.processed_status = Bag.ASSIGNED_RIGHTS
                 bag.save()
                 bags_with_rights.append(bag.bag_identifier)
             except Exception as e:
@@ -119,7 +121,7 @@ class PackageMaker(object):
 
     def run(self):
         packaged = []
-        unpackaged = Bag.objects.filter(rights_data__isnull=False)
+        unpackaged = Bag.objects.filter(process_status=Bag.ASSIGNED_RIGHTS)
         for bag in unpackaged:
             package_root = join(settings.DEST_DIR, bag.bag_identifier)
             package_path = "{}.tar.gz".format(package_root)
@@ -129,6 +131,8 @@ class PackageMaker(object):
                 make_tarfile(bag.bag_path, join(package_root, bag_tar_filename), remove_src=True)
                 make_tarfile(package_root, package_path, remove_src=True)
                 packaged.append(bag.bag_identifier)
+                bag.processed_status = Bag.DELIVERED
+                bag.save()
             except Exception as e:
                 raise Exception(
                     "Error making package for bag {}: {}".format(bag.bag_identifier, str(e))) from e
@@ -149,11 +153,13 @@ class PackageDeliverer(object):
     def run(self):
         dest_dir = settings.DEST_DIR
         delivered = []
-        not_delivered = Bag.objects.filter(rights_data__isnull=False)
+        not_delivered = Bag.objects.filter(process_status=Bag.PACKAGED)
         for bag in not_delivered:
             try:
                 self.deliver_data(bag, dest_dir, settings.DELIVERY_URL)
                 delivered.append(bag.bag_identifier)
+                bag.processed_status = Bag.PACKAGED
+                bag.save()
             except Exception as e:
                 raise Exception(
                     "Error delivering bag {}: {}".format(bag.bag_identifier, str(e))) from e

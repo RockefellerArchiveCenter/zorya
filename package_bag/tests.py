@@ -77,7 +77,7 @@ class TestPackage(TestCase):
 
     def test_create_package(self):
         """Ensures that packages are correctly created."""
-        add_bags_to_db(settings.TMP_DIR, self.expected_count, rights_data=self.rights_json)
+        add_bags_to_db(settings.TMP_DIR, self.expected_count, rights_data=self.rights_json, process_status=Bag.ASSIGNED_RIGHTS)
         copy_binaries(VALID_BAG_FIXTURE_DIR, settings.SRC_DIR)
         create_package = PackageMaker().run()
         self.assertIsNot(False, create_package)
@@ -98,7 +98,7 @@ class TestPackage(TestCase):
 
     def test_serialize_json(self):
         """Ensures that valid JSON is created"""
-        add_bags_to_db(settings.TMP_DIR, self.expected_count, rights_data=self.rights_json)
+        add_bags_to_db(settings.TMP_DIR, self.expected_count, rights_data=self.rights_json, process_status=Bag.ASSIGNED_RIGHTS)
         copy_binaries(VALID_BAG_FIXTURE_DIR, settings.TMP_DIR)
         for bag in Bag.objects.filter(rights_data__isnull=False):
             package_root = join(settings.DEST_DIR, bag.bag_identifier)
@@ -110,7 +110,7 @@ class TestPackage(TestCase):
     @patch('package_bag.routines.post')
     def test_deliver_package(self, mock_post):
         """Ensures that packages are delivered correctly."""
-        add_bags_to_db(settings.TMP_DIR, self.expected_count, rights_data=self.rights_json)
+        add_bags_to_db(settings.TMP_DIR, self.expected_count, rights_data=self.rights_json, process_status=Bag.PACKAGED)
         copy_binaries(VALID_BAG_FIXTURE_DIR, settings.TMP_DIR)
         deliver_package = PackageDeliverer().run()
         self.assertIsNot(False, deliver_package)

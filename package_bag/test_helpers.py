@@ -12,7 +12,7 @@ RIGHTS_ID = "1 2 3"
 END_DATE = datetime.now().strftime("%Y-%m-%d")
 
 
-def add_bags_to_db(tmp_dir, count=5, rights_data=None):
+def add_bags_to_db(tmp_dir, count=5, rights_data=None, process_status=Bag.DISCOVERED):
     '''Adds "count" bags to the database, optionally including rights JSON'''
     for n in range(count):
         bag_id = str(uuid4())
@@ -25,7 +25,8 @@ def add_bags_to_db(tmp_dir, count=5, rights_data=None):
             origin="digitization",
             rights_id=RIGHTS_ID,
             rights_data=rights_data,
-            end_date=END_DATE)
+            end_date=END_DATE,
+            process_status=process_status)
 
 
 def copy_binaries(bag_fixture_dir, dest_dir):
