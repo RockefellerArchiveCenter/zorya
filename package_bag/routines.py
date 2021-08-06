@@ -94,7 +94,7 @@ class RightsAssigner(object):
             try:
                 rights_json = self.retrieve_rights(bag)
                 bag.rights_data = rights_json
-                bag.processed_status = Bag.ASSIGNED_RIGHTS
+                bag.process_status = Bag.ASSIGNED_RIGHTS
                 bag.save()
                 bags_with_rights.append(bag.bag_identifier)
             except Exception as e:
@@ -131,7 +131,7 @@ class PackageMaker(object):
                 make_tarfile(bag.bag_path, join(package_root, bag_tar_filename), remove_src=True)
                 make_tarfile(package_root, package_path, remove_src=True)
                 packaged.append(bag.bag_identifier)
-                bag.processed_status = Bag.DELIVERED
+                bag.process_status = Bag.DELIVERED
                 bag.save()
             except Exception as e:
                 raise Exception(
@@ -158,7 +158,7 @@ class PackageDeliverer(object):
             try:
                 self.deliver_data(bag, dest_dir, settings.DELIVERY_URL)
                 delivered.append(bag.bag_identifier)
-                bag.processed_status = Bag.PACKAGED
+                bag.process_status = Bag.PACKAGED
                 bag.save()
             except Exception as e:
                 raise Exception(
