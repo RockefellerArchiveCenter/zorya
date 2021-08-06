@@ -131,7 +131,7 @@ class PackageMaker(object):
                 make_tarfile(bag.bag_path, join(package_root, bag_tar_filename), remove_src=True)
                 make_tarfile(package_root, package_path, remove_src=True)
                 packaged.append(bag.bag_identifier)
-                bag.process_status = Bag.DELIVERED
+                bag.process_status = Bag.PACKAGED
                 bag.save()
             except Exception as e:
                 raise Exception(
