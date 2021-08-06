@@ -15,7 +15,8 @@ from zorya import settings
 from .models import Bag
 from .routines import (BagDiscoverer, PackageDeliverer, PackageMaker,
                        RightsAssigner)
-from .test_helpers import add_bags_to_db, copy_binaries, set_up_directories
+from .test_helpers import (END_DATE, RIGHTS_ID, add_bags_to_db, copy_binaries,
+                           set_up_directories)
 from .views import (BagDiscovererView, PackageDelivererView, PackageMakerView,
                     RightsAssignerView)
 
@@ -62,6 +63,9 @@ class TestPackage(TestCase):
         mock_rights.return_value.status_code = 200
         mock_rights.return_value.json.return_value = self.rights_service_response
         assign_rights = RightsAssigner().run()
+        mock_rights.assert_called_with(
+            'http://aquila-web:8000/rights',
+            json={'identifiers': RIGHTS_ID, 'start_date': None, 'end_date': END_DATE})
         self.assertIsNot(False, assign_rights)
         self.assertEqual(
             mock_rights.call_count, self.expected_count,
