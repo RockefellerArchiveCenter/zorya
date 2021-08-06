@@ -8,6 +8,9 @@ from uuid import uuid4
 from .models import Bag
 from .routines import BagDiscoverer
 
+RIGHTS_ID = "1 2 3"
+END_DATE = datetime.now().strftime("%Y-%m-%d")
+
 
 def add_bags_to_db(tmp_dir, count=5, rights_data=None):
     '''Adds "count" bags to the database, optionally including rights JSON'''
@@ -20,9 +23,9 @@ def add_bags_to_db(tmp_dir, count=5, rights_data=None):
                 tmp_dir,
                 bag_id),
             origin="digitization",
-            rights_id="1 2 3",
+            rights_id=RIGHTS_ID,
             rights_data=rights_data,
-            end_date=datetime.now().strftime("%Y-%m-%d"))
+            end_date=END_DATE)
 
 
 def copy_binaries(bag_fixture_dir, dest_dir):
