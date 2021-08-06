@@ -1,13 +1,21 @@
+from asterism.models import BasePackage
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-# TO DO: make fields nullable and blank
 
-
-class Bag(models.Model):
+class Bag(BasePackage):
+    DISCOVERED = 1
+    ASSIGNED_RIGHTS = 2
+    PACKAGED = 3
+    DELIVERED = 4
+    PROCESS_STATUS_CHOICES = (
+        (DISCOVERED, "Discovered"),
+        (ASSIGNED_RIGHTS, "Assigned rights"),
+        (PACKAGED, "Packaged"),
+        (DELIVERED, "Delivered")
+    )
+    process_status = models.IntegerField(choices=PROCESS_STATUS_CHOICES, default=DISCOVERED)
     original_bag_name = models.CharField(max_length=255)
-    bag_identifier = models.CharField(max_length=255, unique=True)
-    bag_path = models.CharField(max_length=255)
     ORIGIN_CHOICES = (
         ('legacy_digital', 'Legacy Digital Processing'),
         ('digitization', 'Digitization')

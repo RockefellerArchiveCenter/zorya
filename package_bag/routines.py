@@ -173,4 +173,5 @@ class PackageDeliverer(object):
             headers={
                 "Content-Type": "application/json"},
         )
+        print(r.headers)
         r.raise_for_status()
