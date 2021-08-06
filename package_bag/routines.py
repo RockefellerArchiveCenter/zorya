@@ -158,7 +158,7 @@ class PackageDeliverer(object):
             try:
                 self.deliver_data(bag, dest_dir, settings.DELIVERY_URL)
                 delivered.append(bag.bag_identifier)
-                bag.process_status = Bag.PACKAGED
+                bag.process_status = Bag.DELIVERED
                 bag.save()
             except Exception as e:
                 raise Exception(
