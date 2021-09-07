@@ -1,0 +1,28 @@
+[
+        {
+            "rights_basis": "other",
+            "start_date": "2019-01-01",
+            "end_date": null,
+            "note": "These materials may only be accessed in a reading room setting.",
+            "rights_granted": [
+                {
+                    "act": "publish",
+                    "grant_restriction": "disallow",
+                    "start_date": "1970-01-01",
+                    "end_date": null,
+                    "note": ""
+                }
+            ],
+            "other_basis": "donor"
+        },
+        {
+            "rights_basis": "copyright",
+            "start_date": "1970-01-01",
+            "end_date": "2092-12-31",
+            "note": "Copyright term 120 years from date of creation.",
+            "rights_granted": [],
+            "determination_date": "2021-08-02",
+            "jurisdiction": "us",
+            "copyright_status": "copyrighted"
+        }
+    ]

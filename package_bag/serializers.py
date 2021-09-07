@@ -4,8 +4,11 @@ from .models import Bag
 
 
 class BagSerializer(serializers.ModelSerializer):
-    """docstring for BagSerializer"""
-    # to send to ursa major
+    """Serializer for Digitization Bags"""
+
+    identifier = serializers.CharField(source="bag_identifier")
+    rights_statements = serializers.JSONField(source="rights_data")
+
     class Meta:
         model = Bag
-        fields = ("bag_identifier", "origin", "rights_data")
+        fields = ("identifier", "origin", "rights_statements")
