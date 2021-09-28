@@ -42,38 +42,30 @@ class TestHelpers(TestCase):
 class TestS3Download(TestCase):
     fixtures = [join(settings.BASE_DIR, "fixtures", "s3_download.json")]
 
-    @patch("package_bag.routines.S3ObjectDownloader.__init__")
-    @mock_s3
-    def test_get_list_to_download(self, mock_init):
-        """Test list contains one filename that is in the database"""
-        region_name, access_key, secret_key, bucket = settings.S3
-        mock_init.return_value = None
+    def configure_uploader(self, upload_list):
+        """Sets up an 3ObjectDownloader with mocked s3 bucket and objects."""
         object_downloader = S3ObjectDownloader()
-        object_downloader.src_dir = settings.SRC_DIR
+        region_name, access_key, secret_key, bucket = settings.S3
         s3 = boto3.resource(service_name='s3', region_name=region_name, aws_access_key_id=access_key, aws_secret_access_key=secret_key)
         s3.create_bucket(Bucket=bucket)
         s3_client = boto3.client('s3', region_name=region_name)
         object_downloader.bucket = s3.Bucket(bucket)
-        test_list = ["7d24b2da347b48fe9e59d8c5d4424235.tar", "4b4334fba43a4cf4940f6c8e6d892f60.tar", "4b1bf39c6b6745408ac8de9a5aec34ba.tar"]
-        for item in test_list:
+        for item in upload_list:
             s3_client.put_object(Bucket=bucket, Key=item, Body='')
+        return object_downloader
+
+    @mock_s3
+    def test_get_list_to_download(self):
+        """Test list contains one filename than is in the database."""
+        object_downloader = self.configure_uploader(["7d24b2da347b48fe9e59d8c5d4424235.tar", "4b4334fba43a4cf4940f6c8e6d892f60.tar", "4b1bf39c6b6745408ac8de9a5aec34ba.tar"])
         list_to_download = object_downloader.list_to_download()
         self.assertEqual(len(list_to_download), 2)
 
-    @patch("package_bag.routines.S3ObjectDownloader.__init__")
     @mock_s3
-    def test_download_object_from_s3(self, mock_init):
+    def test_download_object_from_s3(self,):
         set_up_directories([settings.SRC_DIR])
-        region_name, access_key, secret_key, bucket = settings.S3
-        mock_init.return_value = None
-        object_downloader = S3ObjectDownloader()
-        object_downloader.src_dir = settings.SRC_DIR
-        s3 = boto3.resource(service_name='s3', region_name=region_name, aws_access_key_id=access_key, aws_secret_access_key=secret_key)
-        s3.create_bucket(Bucket=bucket)
-        s3_client = boto3.client('s3', region_name=region_name)
-        object_downloader.bucket = s3.Bucket(bucket)
+        object_downloader = self.configure_uploader(["7d24b2da347b48fe9e59d8c5d4424235.tar"])
         object_to_download = "7d24b2da347b48fe9e59d8c5d4424235.tar"
-        s3_client.put_object(Bucket=bucket, Key=object_to_download, Body='')
         object_downloader.download_object_from_s3(object_to_download)
         self.assertIn(object_to_download, listdir(object_downloader.src_dir))
 
