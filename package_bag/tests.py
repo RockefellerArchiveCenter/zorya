@@ -6,15 +6,18 @@ from os.path import isdir, join
 from random import randint
 from unittest.mock import patch
 
+import boto3
 from django.test import TestCase
 from django.urls import reverse
+from moto import mock_s3
+from package_bag.helpers import expected_file_name
 from rac_schemas import is_valid
 from rest_framework.test import APIRequestFactory
 from zorya import settings
 
 from .models import Bag
 from .routines import (BagDiscoverer, PackageDeliverer, PackageMaker,
-                       RightsAssigner)
+                       RightsAssigner, S3ObjectDownloader)
 from .test_helpers import (END_DATE, RIGHTS_ID, add_bags_to_db, copy_binaries,
                            set_up_directories)
 from .views import (BagDiscovererView, PackageDelivererView, PackageMakerView,
@@ -23,6 +26,56 @@ from .views import (BagDiscovererView, PackageDelivererView, PackageMakerView,
 VALID_BAG_FIXTURE_DIR = join(settings.BASE_DIR, 'fixtures', 'bags', 'valid')
 INVALID_BAG_FIXTURE_DIR = join(settings.BASE_DIR, 'fixtures', 'bags', 'invalid')
 RIGHTS_FIXTURE_DIR = join(settings.BASE_DIR, 'fixtures', 'rights')
+
+
+class TestHelpers(TestCase):
+
+    def test_expected_filename(self):
+        passing_filenames = ["7d24b2da347b48fe9e59d8c5d4424235.tar", "4b4334fba43a4cf4940f6c8e6d892f60.tar.gz"]
+        failing_filenames = ["6163b89b00bb4c5cbfc50eb34cb49a75", "example_bag.tar"]
+        for filename in passing_filenames:
+            self.assertTrue(expected_file_name(filename))
+        for filename in failing_filenames:
+            self.assertFalse(expected_file_name(filename))
+
+
+class TestS3Download(TestCase):
+    fixtures = [join(settings.BASE_DIR, "fixtures", "s3_download.json")]
+
+    @patch("package_bag.routines.S3ObjectDownloader.__init__")
+    @mock_s3
+    def test_get_list_to_download(self, mock_init):
+        """Test list contains one filename that is in the database"""
+        region_name, access_key, secret_key, bucket = settings.S3
+        mock_init.return_value = None
+        object_downloader = S3ObjectDownloader()
+        object_downloader.src_dir = settings.SRC_DIR
+        s3 = boto3.resource(service_name='s3', region_name=region_name, aws_access_key_id=access_key, aws_secret_access_key=secret_key)
+        s3.create_bucket(Bucket=bucket)
+        s3_client = boto3.client('s3', region_name=region_name)
+        object_downloader.bucket = s3.Bucket(bucket)
+        test_list = ["7d24b2da347b48fe9e59d8c5d4424235.tar", "4b4334fba43a4cf4940f6c8e6d892f60.tar", "4b1bf39c6b6745408ac8de9a5aec34ba.tar"]
+        for item in test_list:
+            s3_client.put_object(Bucket=bucket, Key=item, Body='')
+        list_to_download = object_downloader.get_list_to_download()
+        self.assertEqual(len(list_to_download), 2)
+
+    @patch("package_bag.routines.S3ObjectDownloader.__init__")
+    @mock_s3
+    def test_download_object_from_s3(self, mock_init):
+        set_up_directories([settings.SRC_DIR])
+        region_name, access_key, secret_key, bucket = settings.S3
+        mock_init.return_value = None
+        object_downloader = S3ObjectDownloader()
+        object_downloader.src_dir = settings.SRC_DIR
+        s3 = boto3.resource(service_name='s3', region_name=region_name, aws_access_key_id=access_key, aws_secret_access_key=secret_key)
+        s3.create_bucket(Bucket=bucket)
+        s3_client = boto3.client('s3', region_name=region_name)
+        object_downloader.bucket = s3.Bucket(bucket)
+        object_to_download = "7d24b2da347b48fe9e59d8c5d4424235.tar"
+        s3_client.put_object(Bucket=bucket, Key=object_to_download, Body='')
+        object_downloader.download_object_from_s3(object_to_download)
+        self.assertIn(object_to_download, listdir(object_downloader.src_dir))
 
 
 class TestPackage(TestCase):

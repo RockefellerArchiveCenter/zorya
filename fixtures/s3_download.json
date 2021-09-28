@@ -1,0 +1,15 @@
+[
+  {
+		"model": "package_bag.bag",
+		"pk": 1,
+		"fields": {
+			"bag_identifier": "0c842a6b-9963-48c3-a07c-5cc9730489ce",
+			"bag_path": "/tmp_dir/0c842a6b-9963-48c3-a07c-5cc9730489ce",
+			"original_bag_name": "/src_dir/4b1bf39c6b6745408ac8de9a5aec34ba.tar",
+			"origin": "digitization",
+			"process_status": 1,
+			"created": "2021-07-26T20:02:22.535Z",
+			"last_modified": "2021-07-26T20:02:22.535Z"
+		}
+	}
+]
