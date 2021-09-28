@@ -106,7 +106,7 @@ class BagDiscoverer(object):
         bag = None
         for bag in listdir(self.src_dir):
             ext = splitext(bag)[-1]
-            if ext in ['.tar''.tgz', '.gz']:
+            if ext in ['.tar', '.tgz', '.gz']:
                 bag = join(self.src_dir, bag)
         return bag
 
