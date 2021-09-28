@@ -57,7 +57,7 @@ class TestS3Download(TestCase):
         test_list = ["7d24b2da347b48fe9e59d8c5d4424235.tar", "4b4334fba43a4cf4940f6c8e6d892f60.tar", "4b1bf39c6b6745408ac8de9a5aec34ba.tar"]
         for item in test_list:
             s3_client.put_object(Bucket=bucket, Key=item, Body='')
-        list_to_download = object_downloader.get_list_to_download()
+        list_to_download = object_downloader.list_to_download()
         self.assertEqual(len(list_to_download), 2)
 
     @patch("package_bag.routines.S3ObjectDownloader.__init__")

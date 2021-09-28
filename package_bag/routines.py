@@ -27,14 +27,14 @@ class S3ObjectDownloader(object):
 
     def run(self):
         downloaded = []
-        files_to_download = self.get_list_to_download
+        files_to_download = self.list_to_download
         for file in files_to_download:
             downloaded_file = self.download_object_from_s3(file)
             downloaded.append(downloaded_file)
         msg = "Files downloaded." if len(downloaded) else "No files ready to be downloaded."
         return msg, downloaded
 
-    def get_list_to_download(self):
+    def list_to_download(self):
         """Gets list of items to download from S3 bucket, and removes items which do no match criteria
 
         Returns:
