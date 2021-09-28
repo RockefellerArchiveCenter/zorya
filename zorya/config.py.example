@@ -21,3 +21,8 @@ RIGHTS_URL = 'http://aquila-web:8000/rights'
 RIGHTS_KEY = 'dger4tgj7ilrty5547htdfnhmfk'
 
 STATIC_ROOT = '/static'
+
+AWS_REGION_NAME = "us-east-1" # Region name for AWS bucket that bags will be downloaded from (string)
+AWS_ACCESS_KEY = "123456789" # Access key for AWS bucket that bags will be downloaded from (string)
+AWS_SECRET_KEY = "987654321" # Secret key for AWS bucket that bags will be downloaded from (string)
+AWS_BUCKET_NAME = "rac-iiif" # Bucket name for AWS bucket that bags will be downloaded from (string)
