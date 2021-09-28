@@ -56,13 +56,14 @@ class TestS3Download(TestCase):
 
     @mock_s3
     def test_get_list_to_download(self):
-        """Test list contains one filename than is in the database."""
+        """Test list contains one filename than is in the database; the file that is in the database should not be downloaded"""
         object_downloader = self.configure_uploader(["7d24b2da347b48fe9e59d8c5d4424235.tar", "4b4334fba43a4cf4940f6c8e6d892f60.tar", "4b1bf39c6b6745408ac8de9a5aec34ba.tar"])
         list_to_download = object_downloader.list_to_download()
         self.assertEqual(len(list_to_download), 2)
 
     @mock_s3
     def test_download_object_from_s3(self,):
+        """Tests that object is downloaded from the S3 bucket to the source directory"""
         set_up_directories([settings.SRC_DIR])
         object_downloader = self.configure_uploader(["7d24b2da347b48fe9e59d8c5d4424235.tar"])
         object_to_download = "7d24b2da347b48fe9e59d8c5d4424235.tar"
