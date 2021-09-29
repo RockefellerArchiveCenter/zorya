@@ -56,8 +56,11 @@ class TestS3Download(TestCase):
 
     @mock_s3
     def test_get_list_to_download(self):
-        """Test list contains one filename that is in the database; the file that is in the database should not be downloaded"""
-        object_downloader = self.configure_uploader(["7d24b2da347b48fe9e59d8c5d4424235.tar", "4b4334fba43a4cf4940f6c8e6d892f60.tar", "4b1bf39c6b6745408ac8de9a5aec34ba.tar"])
+        """Tests that expected files are downloaded"""
+        already_in_db = Bag.objects.get(pk=1).original_bag_name.split("/")[-1]
+        objects_in_bucket = ["7d24b2da347b48fe9e59d8c5d4424235.tar", "4b4334fba43a4cf4940f6c8e6d892f60.tar", "example_file.txt"]
+        objects_in_bucket.append(already_in_db)
+        object_downloader = self.configure_uploader(objects_in_bucket)
         list_to_download = object_downloader.list_to_download()
         self.assertEqual(len(list_to_download), 2)
 
