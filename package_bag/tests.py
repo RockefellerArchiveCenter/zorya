@@ -42,6 +42,9 @@ class TestHelpers(TestCase):
 class TestS3Download(TestCase):
     fixtures = [join(settings.BASE_DIR, "fixtures", "s3_download.json")]
 
+    def setUp(self):
+        self.factory = APIRequestFactory()
+
     def configure_uploader(self, upload_list):
         """Sets up an 3ObjectDownloader with mocked s3 bucket and objects."""
         object_downloader = S3ObjectDownloader()
@@ -53,6 +56,14 @@ class TestS3Download(TestCase):
         for item in upload_list:
             s3_client.put_object(Bucket=bucket, Key=item, Body='')
         return object_downloader
+
+    @mock_s3
+    def test_s3_download_view(self):
+        self.configure_uploader(["4b4334fba43a4cf4940f6c8e6d892f60.tar"])
+        request = self.factory.post(reverse("s3objectdownloader"))
+        response = S3ObjectDownloaderView.as_view()(request)
+        self.assertEqual(
+            response.status_code, 200, "View error: {}".format(response.data))
 
     @mock_s3
     def test_get_list_to_download(self):
@@ -183,7 +194,6 @@ class TestViews(TestCase):
 
     def test_routine_views(self):
         for view_str, view in [
-                ("s3objectdownloader", S3ObjectDownloaderView),
                 ("bagdiscoverer", BagDiscovererView),
                 ("rightsassigner", RightsAssignerView),
                 ("packagemaker", PackageMakerView),

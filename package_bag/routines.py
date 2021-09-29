@@ -27,7 +27,7 @@ class S3ObjectDownloader(object):
 
     def run(self):
         downloaded = []
-        files_to_download = self.list_to_download
+        files_to_download = self.list_to_download()
         for file in files_to_download:
             downloaded_file = self.download_object_from_s3(file)
             downloaded.append(downloaded_file)
