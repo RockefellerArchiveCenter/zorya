@@ -21,7 +21,7 @@ from .routines import (BagDiscoverer, PackageDeliverer, PackageMaker,
 from .test_helpers import (END_DATE, RIGHTS_ID, add_bags_to_db, copy_binaries,
                            set_up_directories)
 from .views import (BagDiscovererView, PackageDelivererView, PackageMakerView,
-                    RightsAssignerView)
+                    RightsAssignerView, S3ObjectDownloaderView)
 
 VALID_BAG_FIXTURE_DIR = join(settings.BASE_DIR, 'fixtures', 'bags', 'valid')
 INVALID_BAG_FIXTURE_DIR = join(settings.BASE_DIR, 'fixtures', 'bags', 'invalid')
@@ -180,6 +180,7 @@ class TestViews(TestCase):
 
     def test_routine_views(self):
         for view_str, view in [
+                ("s3objectdownloader", S3ObjectDownloaderView),
                 ("bagdiscoverer", BagDiscovererView),
                 ("rightsassigner", RightsAssignerView),
                 ("packagemaker", PackageMakerView),
