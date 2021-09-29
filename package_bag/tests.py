@@ -193,6 +193,7 @@ class TestViews(TestCase):
         set_up_directories([settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR])
 
     def test_routine_views(self):
+        """S3ObjectDownloaderView is tested in the TestS3Download test case, due to the overlap of AWS setup work with the S3ObjectDownloader routine"""
         for view_str, view in [
                 ("bagdiscoverer", BagDiscovererView),
                 ("rightsassigner", RightsAssignerView),
