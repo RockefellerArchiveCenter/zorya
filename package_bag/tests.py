@@ -6,23 +6,83 @@ from os.path import isdir, join
 from random import randint
 from unittest.mock import patch
 
+import boto3
 from django.test import TestCase
 from django.urls import reverse
+from moto import mock_s3
+from package_bag.helpers import expected_file_name
 from rac_schemas import is_valid
 from rest_framework.test import APIRequestFactory
 from zorya import settings
 
 from .models import Bag
 from .routines import (BagDiscoverer, PackageDeliverer, PackageMaker,
-                       RightsAssigner)
+                       RightsAssigner, S3ObjectDownloader)
 from .test_helpers import (END_DATE, RIGHTS_ID, add_bags_to_db, copy_binaries,
                            set_up_directories)
 from .views import (BagDiscovererView, PackageDelivererView, PackageMakerView,
-                    RightsAssignerView)
+                    RightsAssignerView, S3ObjectDownloaderView)
 
 VALID_BAG_FIXTURE_DIR = join(settings.BASE_DIR, 'fixtures', 'bags', 'valid')
 INVALID_BAG_FIXTURE_DIR = join(settings.BASE_DIR, 'fixtures', 'bags', 'invalid')
 RIGHTS_FIXTURE_DIR = join(settings.BASE_DIR, 'fixtures', 'rights')
+
+
+class TestHelpers(TestCase):
+
+    def test_expected_filename(self):
+        passing_filenames = ["7d24b2da347b48fe9e59d8c5d4424235.tar", "4b4334fba43a4cf4940f6c8e6d892f60.tar.gz"]
+        failing_filenames = ["6163b89b00bb4c5cbfc50eb34cb49a75", "example_bag.tar"]
+        for filename in passing_filenames:
+            self.assertTrue(expected_file_name(filename))
+        for filename in failing_filenames:
+            self.assertFalse(expected_file_name(filename))
+
+
+class TestS3Download(TestCase):
+    fixtures = [join(settings.BASE_DIR, "fixtures", "s3_download.json")]
+
+    def setUp(self):
+        self.factory = APIRequestFactory()
+
+    def configure_uploader(self, upload_list):
+        """Sets up an 3ObjectDownloader with mocked s3 bucket and objects."""
+        object_downloader = S3ObjectDownloader()
+        region_name, access_key, secret_key, bucket = settings.S3
+        s3 = boto3.resource(service_name='s3', region_name=region_name, aws_access_key_id=access_key, aws_secret_access_key=secret_key)
+        s3.create_bucket(Bucket=bucket)
+        s3_client = boto3.client('s3', region_name=region_name)
+        object_downloader.bucket = s3.Bucket(bucket)
+        for item in upload_list:
+            s3_client.put_object(Bucket=bucket, Key=item, Body='')
+        return object_downloader
+
+    @mock_s3
+    def test_s3_download_view(self):
+        self.configure_uploader(["4b4334fba43a4cf4940f6c8e6d892f60.tar"])
+        request = self.factory.post(reverse("s3objectdownloader"))
+        response = S3ObjectDownloaderView.as_view()(request)
+        self.assertEqual(
+            response.status_code, 200, "View error: {}".format(response.data))
+
+    @mock_s3
+    def test_get_list_to_download(self):
+        """Tests that expected files are downloaded"""
+        already_in_db = Bag.objects.get(pk=1).original_bag_name.split("/")[-1]
+        objects_in_bucket = ["7d24b2da347b48fe9e59d8c5d4424235.tar", "4b4334fba43a4cf4940f6c8e6d892f60.tar", "example_file.txt"]
+        objects_in_bucket.append(already_in_db)
+        object_downloader = self.configure_uploader(objects_in_bucket)
+        list_to_download = object_downloader.list_to_download()
+        self.assertEqual(len(list_to_download), 2)
+
+    @mock_s3
+    def test_download_object_from_s3(self,):
+        """Tests that object is downloaded from the S3 bucket to the source directory"""
+        set_up_directories([settings.SRC_DIR])
+        object_downloader = self.configure_uploader(["7d24b2da347b48fe9e59d8c5d4424235.tar"])
+        object_to_download = "7d24b2da347b48fe9e59d8c5d4424235.tar"
+        object_downloader.download_object_from_s3(object_to_download)
+        self.assertIn(object_to_download, listdir(object_downloader.src_dir))
 
 
 class TestPackage(TestCase):
@@ -133,6 +193,7 @@ class TestViews(TestCase):
         set_up_directories([settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR])
 
     def test_routine_views(self):
+        """S3ObjectDownloaderView is tested in the TestS3Download test case, due to the overlap of AWS setup work with the S3ObjectDownloader routine"""
         for view_str, view in [
                 ("bagdiscoverer", BagDiscovererView),
                 ("rightsassigner", RightsAssignerView),
