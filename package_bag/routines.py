@@ -30,6 +30,7 @@ class S3ObjectDownloader(object):
         files_to_download = self.list_to_download()
         for file in files_to_download:
             downloaded_file = self.download_object_from_s3(file)
+            self.delete_object_from_s3(file)
             downloaded.append(downloaded_file)
         msg = "Files downloaded." if len(downloaded) else "No files ready to be downloaded."
         return msg, downloaded
@@ -64,6 +65,19 @@ class S3ObjectDownloader(object):
                 raise Exception("The object does not exist.")
             else:
                 raise Exception("Error connecting to AWS: {}".format(e))
+
+    def delete_object_from_s3(self, filename):
+        """Deletes an object from an S3 bucket
+
+        Args:
+            filename (str): filename which should be the S3 object key
+
+        Returns:
+            downloaded_file (str): full path to downloaded file"""
+        try:
+            self.bucket.delete_objects(Delete={'Objects': [{'Key': filename}]})
+        except ClientError as e:
+            raise Exception("Error connecting to AWS: {}".format(e))
 
 
 class BagDiscoverer(object):
