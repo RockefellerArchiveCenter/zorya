@@ -84,6 +84,15 @@ class TestS3Download(TestCase):
         object_downloader.download_object_from_s3(object_to_download)
         self.assertIn(object_to_download, listdir(object_downloader.src_dir))
 
+    @mock_s3
+    def test_delete_object_from_s3(self,):
+        """Tests that object is deleted from the S3 bucket"""
+        set_up_directories([settings.SRC_DIR])
+        object_downloader = self.configure_uploader(["7d24b2da347b48fe9e59d8c5d4424235.tar"])
+        object_to_delete = "7d24b2da347b48fe9e59d8c5d4424235.tar"
+        object_downloader.delete_object_from_s3(object_to_delete)
+        self.assertNotIn(object_to_delete, object_downloader.list_to_download())
+
 
 class TestPackage(TestCase):
 
