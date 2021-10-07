@@ -3,7 +3,7 @@ from rest_framework.viewsets import ModelViewSet
 
 from .models import Bag
 from .routines import (BagDiscoverer, PackageDeliverer, PackageMaker,
-                       RightsAssigner)
+                       RightsAssigner, S3ObjectDownloader)
 from .serializers import BagSerializer
 
 
@@ -12,6 +12,11 @@ class BagViewSet(ModelViewSet):
     model = Bag
     queryset = Bag.objects.all()
     serializer_class = BagSerializer
+
+
+class S3ObjectDownloaderView(RoutineView):
+    """Triggers the S3ObjectDownloader routine."""
+    routine = S3ObjectDownloader
 
 
 class BagDiscovererView(RoutineView):

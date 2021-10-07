@@ -6,13 +6,78 @@ from uuid import uuid4
 
 import bagit
 import bagit_profile
+import boto3
 from asterism.bagit_helpers import validate
 from asterism.file_helpers import make_tarfile, remove_file_or_dir
+from botocore.exceptions import ClientError
+from package_bag.helpers import expected_file_name
 from package_bag.serializers import BagSerializer
 from requests import post
 from zorya import settings
 
 from .models import Bag
+
+
+class S3ObjectDownloader(object):
+    def __init__(self):
+        region_name, access_key, secret_key, bucket = settings.S3
+        s3 = boto3.resource(service_name='s3', region_name=region_name, aws_access_key_id=access_key, aws_secret_access_key=secret_key)
+        self.bucket = s3.Bucket(bucket)
+        self.src_dir = settings.SRC_DIR
+
+    def run(self):
+        downloaded = []
+        files_to_download = self.list_to_download()
+        for file in files_to_download:
+            downloaded_file = self.download_object_from_s3(file)
+            self.delete_object_from_s3(file)
+            downloaded.append(downloaded_file)
+        msg = "Files downloaded." if len(downloaded) else "No files ready to be downloaded."
+        return msg, downloaded
+
+    def list_to_download(self):
+        """Gets list of items to download from S3 bucket, and removes items which do no match criteria
+
+        Returns:
+            List of filenames (strings)"""
+        files_in_bucket = [bucket_object.key for bucket_object in self.bucket.objects.all()]
+        for filename in files_in_bucket:
+            if not expected_file_name(filename):
+                files_in_bucket.remove(filename)
+            elif Bag.objects.filter(original_bag_name=join(self.src_dir, filename)):
+                files_in_bucket.remove(filename)
+        return files_in_bucket
+
+    def download_object_from_s3(self, filename):
+        """Downloads an object from S3 to the source directory
+
+        Args:
+            filename (str): filename which should be the S3 object key as well as the filename to download to
+
+        Returns:
+            downloaded_file (str): full path to downloaded file"""
+        downloaded_file = join(self.src_dir, filename)
+        try:
+            self.bucket.download_file(filename, downloaded_file)
+            return downloaded_file
+        except ClientError as e:
+            if e.response['Error']['Code'] == "404":
+                raise Exception("The object does not exist.")
+            else:
+                raise Exception("Error connecting to AWS: {}".format(e))
+
+    def delete_object_from_s3(self, filename):
+        """Deletes an object from an S3 bucket
+
+        Args:
+            filename (str): filename which should be the S3 object key
+
+        Returns:
+            downloaded_file (str): full path to downloaded file"""
+        try:
+            self.bucket.delete_objects(Delete={'Objects': [{'Key': filename}]})
+        except ClientError as e:
+            raise Exception("Error connecting to AWS: {}".format(e))
 
 
 class BagDiscoverer(object):
@@ -29,7 +94,7 @@ class BagDiscoverer(object):
         # TODO: check for json profile
 
     def run(self):
-        bag = self.discover_next_bag(self.src_dir)
+        bag = self.discover_next_bag()
         if bag:
             try:
                 bag_id = self.unpack_rename(bag, self.tmp_dir)
@@ -46,17 +111,17 @@ class BagDiscoverer(object):
                 new_bag.save()
             except Exception as e:
                 remove_file_or_dir(bag_path)
-                raise Exception("Error processing discovered bag {}: {}".format(bag, str(e))) from e
+                raise Exception("Error processing discovered bag {}: {}".format(bag, str(e)))
         msg = "Bag discovered, renamed and saved." if bag else "No bags were found."
         return (msg, bag_id) if bag else (msg, None)
 
-    def discover_next_bag(self, src):
+    def discover_next_bag(self):
         """Looks in a given directory for compressed bags, adds to list to process"""
         bag = None
-        for bag in listdir(src):
+        for bag in listdir(self.src_dir):
             ext = splitext(bag)[-1]
-            if ext in ['.tgz', '.gz']:
-                bag = join(src, bag)
+            if ext in ['.tar', '.tgz', '.gz']:
+                bag = join(self.src_dir, bag)
         return bag
 
     def unpack_rename(self, bag_path, tmp):
@@ -99,7 +164,7 @@ class RightsAssigner(object):
                 bags_with_rights.append(bag.bag_identifier)
             except Exception as e:
                 raise Exception(
-                    "Error assigning rights to bag {}: {}".format(bag.bag_identifier, str(e))) from e
+                    "Error assigning rights to bag {}: {}".format(bag.bag_identifier, str(e)))
 
         msg = "Rights assigned." if len(bags_with_rights) else "No bags to assign rights to found."
         return msg, bags_with_rights
@@ -135,7 +200,7 @@ class PackageMaker(object):
                 bag.save()
             except Exception as e:
                 raise Exception(
-                    "Error making package for bag {}: {}".format(bag.bag_identifier, str(e))) from e
+                    "Error making package for bag {}: {}".format(bag.bag_identifier, str(e)))
         msg = "Packages created." if len(packaged) else "No files ready for packaging."
         return msg, packaged
 

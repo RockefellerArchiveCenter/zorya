@@ -136,3 +136,6 @@ DELIVERY_URL = CF.DELIVERY_URL
 RIGHTS_URL = CF.RIGHTS_URL
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+# region_name, access_key, secret_key, bucket
+S3 = (CF.AWS_REGION_NAME, CF.AWS_ACCESS_KEY, CF.AWS_SECRET_KEY, CF.AWS_BUCKET_NAME)
