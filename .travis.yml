@@ -15,9 +15,9 @@ before_install:
   - docker-compose up -d
 install:
   - pip install pre-commit && pre-commit install
-  - ./wait-for-it.sh $CONTAINER:${DJANGO_PORT} -- docker-compose exec $CONTAINER pip install coverage
+  - ./wait-for-it.sh ${CONTAINER}:${DJANGO_PORT} -- docker-compose exec $CONTAINER pip install coverage
 script:
   - pre-commit run --all-files --show-diff-on-failure
-  - docker-compose exec $CONTAINER coverage run manage.py test
+  - docker-compose exec ${CONTAINER} coverage run manage.py test
 after_script:
-  - docker-compose exec $CONTAINER coverage report --omit=*/migrations/* -m
+  - docker-compose exec ${CONTAINER} coverage report --omit=*/migrations/* -m
