@@ -48,6 +48,10 @@ Or, if you want to remove all data
 
 Using this repo requires having [Docker](https://store.docker.com/search?type=edition&offering=community) installed.
 
+## Development
+
+This repository contains a configuration file for git [pre-commit](https://pre-commit.com/) hooks which help ensure that code is linted before it is checked into version control. It is strongly recommended that you install these hooks locally by installing pre-commit and running `pre-commit install`.
+
 ## License
 
 Code is released under an MIT License, as all your code should be. See [LICENSE](LICENSE) for details.
