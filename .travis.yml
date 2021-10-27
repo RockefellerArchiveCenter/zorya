@@ -9,6 +9,7 @@ env:
   global:
     - CONTAINER: zorya-web
     - APPLICATION_NAME: zorya
+    - DJANGO_PORT: 8011
 before_install:
   - cp ${APPLICATION_NAME}/config.py.example ${APPLICATION_NAME}/config.py
   - echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
