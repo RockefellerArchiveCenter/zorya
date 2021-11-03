@@ -131,11 +131,12 @@ class TestPackage(TestCase):
         add_bags_to_db(settings.TMP_DIR, self.expected_count)
         mock_rights.return_value.status_code = 200
         mock_rights.return_value.json.return_value = self.rights_service_response
-        assign_rights = RightsAssigner().run()
-        mock_rights.assert_called_with(
-            'http://aquila-web:8000/rights',
-            json={'identifiers': RIGHTS_ID, 'start_date': None, 'end_date': END_DATE})
-        self.assertIsNot(False, assign_rights)
+        for bag in Bag.objects.filter(process_status=Bag.DISCOVERED):
+            assign_rights = RightsAssigner().run()
+            mock_rights.assert_called_with(
+                'http://aquila-web:8000/rights',
+                json={'identifiers': RIGHTS_ID, 'start_date': None, 'end_date': END_DATE})
+            self.assertIsNot(False, assign_rights)
         self.assertEqual(
             mock_rights.call_count, self.expected_count,
             "Incorrect number of calls to rights service.")
@@ -148,11 +149,12 @@ class TestPackage(TestCase):
         """Ensures that packages are correctly created."""
         add_bags_to_db(settings.TMP_DIR, self.expected_count, rights_data=self.rights_json, process_status=Bag.ASSIGNED_RIGHTS)
         copy_binaries(VALID_BAG_FIXTURE_DIR, settings.SRC_DIR)
-        create_package = PackageMaker().run()
-        self.assertIsNot(False, create_package)
-        self.assertEqual(
-            len(listdir(settings.TMP_DIR)), 0,
-            "Temporary directory is not empty.")
+        for bag in Bag.objects.filter(process_status=Bag.ASSIGNED_RIGHTS):
+            create_package = PackageMaker().run()
+            self.assertIsNot(False, create_package)
+            self.assertEqual(
+                len(listdir(settings.TMP_DIR)), 0,
+                "Temporary directory is not empty.")
         self.assertEqual(
             len(listdir(settings.DEST_DIR)), self.expected_count,
             "Incorrect number of binaries in destination directory.")
@@ -181,10 +183,13 @@ class TestPackage(TestCase):
         """Ensures that packages are delivered correctly."""
         add_bags_to_db(settings.TMP_DIR, self.expected_count, rights_data=self.rights_json, process_status=Bag.PACKAGED)
         copy_binaries(VALID_BAG_FIXTURE_DIR, settings.TMP_DIR)
-        deliver_package = PackageDeliverer().run()
-        self.assertIsNot(False, deliver_package)
+        count = 0
+        for bag in Bag.objects.filter(process_status=Bag.PACKAGED):
+            deliver_package = PackageDeliverer().run()
+            self.assertIsNot(False, deliver_package)
+            count += 1
         self.assertEqual(
-            len(deliver_package[1]), self.expected_count,
+            count, self.expected_count,
             "Incorrect number of bags processed.")
         self.assertEqual(
             mock_post.call_count, self.expected_count,
@@ -211,7 +216,7 @@ class TestViews(TestCase):
             request = self.factory.post(reverse(view_str))
             response = view.as_view()(request)
             self.assertEqual(
-                response.status_code, 200, "View error: {}".format(response.data))
+                response.status_code, 200, f"View error: {response.data} in {view}")
 
     def test_health_check_view(self):
         status = self.client.get(reverse('api_health_ping'))

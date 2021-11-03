@@ -26,14 +26,13 @@ class S3ObjectDownloader(object):
         self.src_dir = settings.SRC_DIR
 
     def run(self):
-        downloaded = []
-        files_to_download = self.list_to_download()
-        for file in files_to_download:
-            downloaded_file = self.download_object_from_s3(file)
-            self.delete_object_from_s3(file)
-            downloaded.append(downloaded_file)
-        msg = "Files downloaded." if len(downloaded) else "No files ready to be downloaded."
-        return msg, downloaded
+        list_to_download = self.list_to_download()
+        if list_to_download:
+            file_to_download = list_to_download[0]
+            downloaded_file = self.download_object_from_s3(file_to_download)
+            self.delete_object_from_s3(file_to_download)
+        msg = "Files downloaded." if list_to_download else "No files ready to be downloaded."
+        return msg, [downloaded_file] if list_to_download else []
 
     def list_to_download(self):
         """Gets list of items to download from S3 bucket, and removes items which do no match criteria
@@ -154,20 +153,17 @@ class RightsAssigner(object):
     """Send rights IDs to external service and receive JSON in return"""
 
     def run(self):
-        bags_with_rights = []
-        for bag in Bag.objects.filter(process_status=Bag.DISCOVERED):
+        bag = Bag.objects.filter(process_status=Bag.DISCOVERED).first()
+        if bag:
             try:
                 rights_json = self.retrieve_rights(bag)
                 bag.rights_data = rights_json
                 bag.process_status = Bag.ASSIGNED_RIGHTS
                 bag.save()
-                bags_with_rights.append(bag.bag_identifier)
             except Exception as e:
-                raise Exception(
-                    "Error assigning rights to bag {}: {}".format(bag.bag_identifier, str(e)))
-
-        msg = "Rights assigned." if len(bags_with_rights) else "No bags to assign rights to found."
-        return msg, bags_with_rights
+                raise Exception(f"Error assigning rights to bag {bag.bag_identifier}: {e}")
+        msg = "Rights assigned." if bag else "No bags to assign rights to found."
+        return msg, [bag.bag_identifier] if bag else []
 
     def retrieve_rights(self, bag):
         """Sends POST request to rights statement service, receives JSON in return"""
@@ -185,9 +181,8 @@ class PackageMaker(object):
     """Create JSON according to Ursa Major schema and package with bag"""
 
     def run(self):
-        packaged = []
-        unpackaged = Bag.objects.filter(process_status=Bag.ASSIGNED_RIGHTS)
-        for bag in unpackaged:
+        bag = Bag.objects.filter(process_status=Bag.ASSIGNED_RIGHTS).first()
+        if bag:
             package_root = join(settings.DEST_DIR, bag.bag_identifier)
             package_path = "{}.tar.gz".format(package_root)
             bag_tar_filename = "{}.tar.gz".format(bag.bag_identifier)
@@ -195,14 +190,12 @@ class PackageMaker(object):
                 self.serialize_json(bag, package_root)
                 make_tarfile(bag.bag_path, join(package_root, bag_tar_filename), remove_src=True)
                 make_tarfile(package_root, package_path, remove_src=True)
-                packaged.append(bag.bag_identifier)
                 bag.process_status = Bag.PACKAGED
                 bag.save()
             except Exception as e:
-                raise Exception(
-                    "Error making package for bag {}: {}".format(bag.bag_identifier, str(e)))
-        msg = "Packages created." if len(packaged) else "No files ready for packaging."
-        return msg, packaged
+                raise Exception(f"Error making package for bag {bag.bag_identifier}: {e}")
+        msg = "Package created." if bag else "No files ready for packaging."
+        return msg, [bag.bag_identifier] if bag else []
 
     def serialize_json(self, bag, package_root):
         """Serialize JSON to file"""
@@ -217,19 +210,16 @@ class PackageDeliverer(object):
 
     def run(self):
         dest_dir = settings.DEST_DIR
-        delivered = []
-        not_delivered = Bag.objects.filter(process_status=Bag.PACKAGED)
-        for bag in not_delivered:
+        bag = Bag.objects.filter(process_status=Bag.PACKAGED).first()
+        if bag:
             try:
                 self.deliver_data(bag, dest_dir, settings.DELIVERY_URL)
-                delivered.append(bag.bag_identifier)
                 bag.process_status = Bag.DELIVERED
                 bag.save()
             except Exception as e:
-                raise Exception(
-                    "Error delivering bag {}: {}".format(bag.bag_identifier, str(e))) from e
-        msg = "Packages delivered." if len(delivered) else "No packages to deliver."
-        return msg, delivered
+                raise Exception(f"Error delivering bag {bag.bag_identifier}: {e}")
+        msg = "Package delivered." if bag else "No packages to deliver."
+        return msg, [bag.bag_identifier] if bag else []
 
     def deliver_data(self, bag, dest_dir, url):
         """Send data to Ursa Major"""
