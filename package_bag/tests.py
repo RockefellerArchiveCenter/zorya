@@ -1,6 +1,6 @@
 import json
 import shutil
-import tarfile
+# import tarfile
 from os import listdir
 from os.path import isdir, join
 from random import randint
@@ -26,6 +26,7 @@ from .views import (BagDiscovererView, PackageDelivererView, PackageMakerView,
 VALID_BAG_FIXTURE_DIR = join(settings.BASE_DIR, 'fixtures', 'bags', 'valid')
 INVALID_BAG_FIXTURE_DIR = join(settings.BASE_DIR, 'fixtures', 'bags', 'invalid')
 RIGHTS_FIXTURE_DIR = join(settings.BASE_DIR, 'fixtures', 'rights')
+PACKAGES_FIXTURE_DIR = join(settings.BASE_DIR, 'fixtures', 'packages')
 
 
 class TestHelpers(TestCase):
@@ -145,7 +146,7 @@ class TestPackage(TestCase):
                 obj.rights_data, self.rights_service_response["rights_statements"],
                 "Rights JSON was not correctly added to bag in database.")
 
-    def test_create_package(self):
+    def test_create_archive_package(self):
         """Ensures that packages are correctly created."""
         add_bags_to_db(settings.TMP_DIR, self.expected_count, rights_data=self.rights_json, process_status=Bag.ASSIGNED_RIGHTS)
         copy_binaries(VALID_BAG_FIXTURE_DIR, settings.SRC_DIR)
@@ -158,14 +159,6 @@ class TestPackage(TestCase):
         self.assertEqual(
             len(listdir(settings.DEST_DIR)), self.expected_count,
             "Incorrect number of binaries in destination directory.")
-        for package in listdir(settings.DEST_DIR):
-            with tarfile.open(join(settings.DEST_DIR, package), "r") as tf:
-                names = tf.getnames()
-                bag_id = package.replace(".tar.gz", "")
-                expected = [bag_id, join(bag_id, package), join(bag_id, "{}.json".format(bag_id))]
-                self.assertEqual(
-                    set(expected), set(names),
-                    "Incorrectly structured package: expected {} but got {}".format(expected, names))
 
     def test_serialize_json(self):
         """Ensures that valid JSON is created"""
@@ -178,7 +171,7 @@ class TestPackage(TestCase):
                 serialized = json.load(f)
             self.assertTrue(is_valid(serialized, "{}_bag".format(bag.origin)))
 
-    @patch('package_bag.routines.post')
+    @ patch('package_bag.routines.post')
     def test_deliver_package(self, mock_post):
         """Ensures that packages are delivered correctly."""
         add_bags_to_db(settings.TMP_DIR, self.expected_count, rights_data=self.rights_json, process_status=Bag.PACKAGED)

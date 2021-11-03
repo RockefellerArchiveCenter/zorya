@@ -184,16 +184,14 @@ class PackageMaker(object):
         bag = Bag.objects.filter(process_status=Bag.ASSIGNED_RIGHTS).first()
         if bag:
             package_root = join(settings.DEST_DIR, bag.bag_identifier)
-            package_path = "{}.tar.gz".format(package_root)
             bag_tar_filename = "{}.tar.gz".format(bag.bag_identifier)
             try:
                 self.serialize_json(bag, package_root)
                 make_tarfile(bag.bag_path, join(package_root, bag_tar_filename), remove_src=True)
-                make_tarfile(package_root, package_path, remove_src=True)
                 bag.process_status = Bag.PACKAGED
                 bag.save()
             except Exception as e:
-                raise Exception(f"Error making package for bag {bag.bag_identifier}: {e}")
+                raise Exception(f"Error making bag for {bag.bag_identifier}: {e}")
         msg = "Package created." if bag else "No files ready for packaging."
         return msg, [bag.bag_identifier] if bag else []
 
@@ -205,12 +203,30 @@ class PackageMaker(object):
             json.dump(bag_json, f, indent=4, sort_keys=True, default=str)
 
 
+class PackageArchiver(object):
+    """Create JSON according to Ursa Major schema and package with bag"""
+
+    def run(self):
+        bag = Bag.objects.filter(process_status=Bag.PACKAGED).first()
+        if bag:
+            package_root = join(settings.DEST_DIR, bag.bag_identifier)
+            package_path = "{}.tar.gz".format(package_root)
+            try:
+                make_tarfile(package_root, package_path, remove_src=True)
+                bag.process_status = Bag.TAR
+                bag.save()
+            except Exception as e:
+                raise Exception(f"Error making package for bag {bag.bag_identifier}: {e}")
+        msg = "Package archive created." if bag else "No files ready for archiving."
+        return msg, [bag.bag_identifier] if bag else []
+
+
 class PackageDeliverer(object):
     """Deliver package to Ursa Major"""
 
     def run(self):
         dest_dir = settings.DEST_DIR
-        bag = Bag.objects.filter(process_status=Bag.PACKAGED).first()
+        bag = Bag.objects.filter(process_status=Bag.TAR).first()
         if bag:
             try:
                 self.deliver_data(bag, dest_dir, settings.DELIVERY_URL)
