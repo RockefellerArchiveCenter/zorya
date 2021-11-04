@@ -3,30 +3,12 @@ from datetime import datetime
 from os import listdir, makedirs
 from os.path import isdir, isfile, join
 from random import choice
-from uuid import uuid4
 
 from .models import Bag
 from .routines import BagDiscoverer
 
 RIGHTS_ID = "1 2 3"
 END_DATE = datetime.now().strftime("%Y-%m-%d")
-
-
-def add_bags_to_db(tmp_dir, count=5, rights_data=None, process_status=Bag.DISCOVERED):
-    '''Adds "count" bags to the database, optionally including rights JSON'''
-    for n in range(count):
-        bag_id = str(uuid4())
-        Bag.objects.create(
-            original_bag_name=bag_id,
-            bag_identifier=bag_id,
-            bag_path=join(
-                tmp_dir,
-                bag_id),
-            origin="digitization",
-            rights_id=RIGHTS_ID,
-            rights_data=rights_data,
-            end_date=END_DATE,
-            process_status=process_status)
 
 
 def copy_binaries(bag_fixture_dir, dest_dir):

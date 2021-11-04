@@ -1,9 +1,8 @@
 import json
 import shutil
-# import tarfile
+import tarfile
 from os import listdir
 from os.path import isdir, join
-from random import randint
 from unittest.mock import patch
 
 import boto3
@@ -16,9 +15,9 @@ from rest_framework.test import APIRequestFactory
 from zorya import settings
 
 from .models import Bag
-from .routines import (BagDiscoverer, PackageDeliverer, PackageMaker,
-                       RightsAssigner, S3ObjectDownloader)
-from .test_helpers import (END_DATE, RIGHTS_ID, add_bags_to_db, copy_binaries,
+from .routines import (BagDiscoverer, PackageArchiver, PackageDeliverer,
+                       PackageMaker, RightsAssigner, S3ObjectDownloader)
+from .test_helpers import (END_DATE, RIGHTS_ID, copy_binaries,
                            set_up_directories)
 from .views import (BagDiscovererView, PackageDelivererView, PackageMakerView,
                     RightsAssignerView, S3ObjectDownloaderView)
@@ -95,22 +94,9 @@ class TestS3Download(TestCase):
         self.assertNotIn(object_to_delete, object_downloader.list_to_download())
 
 
-class BaseTest(TestCase):
+class TestBagDiscoverer(TestCase):
     def setUp(self):
-        self.expected_count = randint(1, 10)
-        with open(join(RIGHTS_FIXTURE_DIR, 'rights_data.json')) as json_file:
-            self.rights_json = json.load(json_file)
-        with open(join(RIGHTS_FIXTURE_DIR, 'rights_service_response.json')) as json_file:
-            self.rights_service_response = json.load(json_file)
         set_up_directories([settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR])
-
-    def tearDown(self):
-        for d in [settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR]:
-            if isdir(d):
-                shutil.rmtree(d)
-
-
-class TestBagDiscoverer(BaseTest):
 
     def test_run(self):
         """Ensures that bags are correctly discovered."""
@@ -133,13 +119,23 @@ class TestBagDiscoverer(BaseTest):
         self.assertIn("Error processing discovered bag", str(exc.exception))
         self.assertEqual(len(listdir(settings.TMP_DIR)), valid_bags)
 
+    def tearDown(self):
+        for d in [settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR]:
+            if isdir(d):
+                shutil.rmtree(d)
 
-class TestRightsAssigner(BaseTest):
+
+class TestRightsAssigner(TestCase):
+    fixtures = ["get_rights.json"]
+
+    def setUp(self):
+        with open(join(RIGHTS_FIXTURE_DIR, 'rights_service_response.json')) as json_file:
+            self.rights_service_response = json.load(json_file)
+        set_up_directories([settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR])
 
     @patch('package_bag.routines.post')
     def test_run(self, mock_rights):
         """Ensures that rights are correctly retrieved and assigned."""
-        add_bags_to_db(settings.TMP_DIR, self.expected_count)
         mock_rights.return_value.status_code = 200
         mock_rights.return_value.json.return_value = self.rights_service_response
         for bag in Bag.objects.filter(process_status=Bag.DISCOVERED):
@@ -149,36 +145,15 @@ class TestRightsAssigner(BaseTest):
                 json={'identifiers': RIGHTS_ID, 'start_date': None, 'end_date': END_DATE})
             self.assertIsNot(False, assign_rights)
         self.assertEqual(
-            mock_rights.call_count, self.expected_count,
+            mock_rights.call_count, 3,
             "Incorrect number of calls to rights service.")
         for obj in Bag.objects.all():
             self.assertEqual(
                 obj.rights_data, self.rights_service_response["rights_statements"],
                 "Rights JSON was not correctly added to bag in database.")
 
-
-class TestPackageMaker(BaseTest):
-
-    def test_run(self):
-        """Ensures that packages are correctly created."""
-        add_bags_to_db(settings.TMP_DIR, self.expected_count, rights_data=self.rights_json, process_status=Bag.ASSIGNED_RIGHTS)
-        copy_binaries(VALID_BAG_FIXTURE_DIR, settings.SRC_DIR)
-        for bag in Bag.objects.filter(process_status=Bag.ASSIGNED_RIGHTS):
-            create_package = PackageMaker().run()
-            self.assertIsNot(False, create_package)
-            self.assertEqual(
-                len(listdir(settings.TMP_DIR)), 0,
-                "Temporary directory is not empty.")
-        self.assertEqual(
-            len(listdir(settings.DEST_DIR)), self.expected_count,
-            "Incorrect number of binaries in destination directory.")
-
-
-class TestPackage(BaseTest):
-
     def test_serialize_json(self):
         """Ensures that valid JSON is created"""
-        add_bags_to_db(settings.TMP_DIR, self.expected_count, rights_data=self.rights_json, process_status=Bag.ASSIGNED_RIGHTS)
         copy_binaries(VALID_BAG_FIXTURE_DIR, settings.TMP_DIR)
         for bag in Bag.objects.filter(rights_data__isnull=False):
             package_root = join(settings.DEST_DIR, bag.bag_identifier)
@@ -187,13 +162,76 @@ class TestPackage(BaseTest):
                 serialized = json.load(f)
             self.assertTrue(is_valid(serialized, "{}_bag".format(bag.origin)))
 
+    def tearDown(self):
+        for d in [settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR]:
+            if isdir(d):
+                shutil.rmtree(d)
 
-class TestPackageArchiver(BaseTest):
 
-    @ patch('package_bag.routines.post')
-    def test_deliver_package(self, mock_post):
+class TestPackageMaker(TestCase):
+    fixtures = ["make_package.json"]
+
+    def setUp(self):
+        set_up_directories([settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR])
+
+    def test_run(self):
+        """Ensures that packages are correctly created."""
+        copy_binaries(VALID_BAG_FIXTURE_DIR, settings.SRC_DIR)
+        for bag in Bag.objects.filter(process_status=Bag.ASSIGNED_RIGHTS):
+            create_package = PackageMaker().run()
+            self.assertIsNot(False, create_package)
+            self.assertEqual(
+                len(listdir(settings.TMP_DIR)), 0,
+                "Temporary directory is not empty.")
+        self.assertEqual(
+            len(listdir(settings.DEST_DIR)), 3,
+            "Incorrect number of binaries in destination directory.")
+
+    def tearDown(self):
+        for d in [settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR]:
+            if isdir(d):
+                shutil.rmtree(d)
+
+
+class TestPackageArchiver(TestCase):
+    fixtures = ["archive_package.json"]
+
+    def setUp(self):
+        set_up_directories([settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR])
+
+    def test_run(self):
+        """Ensures that packages are correctly archived."""
+        shutil.copytree(join(PACKAGES_FIXTURE_DIR, "8a20be92-0b6d-4cb6-964e-f90764302c56"), join(settings.DEST_DIR, "8a20be92-0b6d-4cb6-964e-f90764302c56"))
+        for bag in Bag.objects.filter(process_status=Bag.PACKAGED):
+            archive_package = PackageArchiver().run()
+            self.assertIsNot(False, archive_package)
+        self.assertEqual(
+            len(listdir(settings.DEST_DIR)), 1,
+            "Incorrect number of binaries in destination directory.")
+        for package in listdir(settings.DEST_DIR):
+            with tarfile.open(join(settings.DEST_DIR, package), "r") as tf:
+                names = tf.getnames()
+                bag_id = package.replace(".tar.gz", "")
+                expected = [bag_id, join(bag_id, package), join(bag_id, "{}.json".format(bag_id))]
+                self.assertEqual(
+                    set(expected), set(names),
+                    "Incorrectly structured package: expected {} but got {}".format(expected, names))
+
+    def tearDown(self):
+        for d in [settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR]:
+            if isdir(d):
+                shutil.rmtree(d)
+
+
+class TestPackageDeliverer(TestCase):
+    fixtures = ["deliver_package.json"]
+
+    def setUp(self):
+        set_up_directories([settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR])
+
+    @patch('package_bag.routines.post')
+    def test_run(self, mock_post):
         """Ensures that packages are delivered correctly."""
-        add_bags_to_db(settings.TMP_DIR, self.expected_count, rights_data=self.rights_json, process_status=Bag.TAR)
         copy_binaries(VALID_BAG_FIXTURE_DIR, settings.TMP_DIR)
         count = 0
         for bag in Bag.objects.filter(process_status=Bag.TAR):
@@ -201,11 +239,16 @@ class TestPackageArchiver(BaseTest):
             self.assertIsNot(False, deliver_package)
             count += 1
         self.assertEqual(
-            count, self.expected_count,
+            count, 3,
             "Incorrect number of bags processed.")
         self.assertEqual(
-            mock_post.call_count, self.expected_count,
+            mock_post.call_count, 3,
             "Incorrect number of update requests made.")
+
+    def tearDown(self):
+        for d in [settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR]:
+            if isdir(d):
+                shutil.rmtree(d)
 
 
 class TestViews(TestCase):
