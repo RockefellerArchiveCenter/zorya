@@ -23,10 +23,10 @@ from .test_helpers import (END_DATE, RIGHTS_ID, add_bags_to_db, copy_binaries,
 from .views import (BagDiscovererView, PackageDelivererView, PackageMakerView,
                     RightsAssignerView, S3ObjectDownloaderView)
 
-VALID_BAG_FIXTURE_DIR = join(settings.BASE_DIR, 'fixtures', 'bags', 'valid')
-INVALID_BAG_FIXTURE_DIR = join(settings.BASE_DIR, 'fixtures', 'bags', 'invalid')
-RIGHTS_FIXTURE_DIR = join(settings.BASE_DIR, 'fixtures', 'rights')
-PACKAGES_FIXTURE_DIR = join(settings.BASE_DIR, 'fixtures', 'packages')
+VALID_BAG_FIXTURE_DIR = join(settings.BASE_DIR, 'package_bag', 'fixtures', 'bags', 'valid')
+INVALID_BAG_FIXTURE_DIR = join(settings.BASE_DIR, 'package_bag', 'fixtures', 'bags', 'invalid')
+RIGHTS_FIXTURE_DIR = join(settings.BASE_DIR, 'package_bag', 'fixtures', 'rights')
+PACKAGES_FIXTURE_DIR = join(settings.BASE_DIR, 'package_bag', 'fixtures', 'packages')
 
 
 class TestHelpers(TestCase):
@@ -41,7 +41,7 @@ class TestHelpers(TestCase):
 
 
 class TestS3Download(TestCase):
-    fixtures = [join(settings.BASE_DIR, "fixtures", "s3_download.json")]
+    fixtures = ["s3_download.json"]
 
     def setUp(self):
         self.factory = APIRequestFactory()
@@ -95,8 +95,7 @@ class TestS3Download(TestCase):
         self.assertNotIn(object_to_delete, object_downloader.list_to_download())
 
 
-class TestPackage(TestCase):
-
+class BaseTest(TestCase):
     def setUp(self):
         self.expected_count = randint(1, 10)
         with open(join(RIGHTS_FIXTURE_DIR, 'rights_data.json')) as json_file:
@@ -105,7 +104,15 @@ class TestPackage(TestCase):
             self.rights_service_response = json.load(json_file)
         set_up_directories([settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR])
 
-    def test_discover_bags(self):
+    def tearDown(self):
+        for d in [settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR]:
+            if isdir(d):
+                shutil.rmtree(d)
+
+
+class TestBagDiscoverer(BaseTest):
+
+    def test_run(self):
         """Ensures that bags are correctly discovered."""
         valid_bags = len([i for i in listdir(VALID_BAG_FIXTURE_DIR)])
         shutil.rmtree(settings.SRC_DIR)
@@ -126,8 +133,11 @@ class TestPackage(TestCase):
         self.assertIn("Error processing discovered bag", str(exc.exception))
         self.assertEqual(len(listdir(settings.TMP_DIR)), valid_bags)
 
+
+class TestRightsAssigner(BaseTest):
+
     @patch('package_bag.routines.post')
-    def test_get_rights(self, mock_rights):
+    def test_run(self, mock_rights):
         """Ensures that rights are correctly retrieved and assigned."""
         add_bags_to_db(settings.TMP_DIR, self.expected_count)
         mock_rights.return_value.status_code = 200
@@ -146,7 +156,10 @@ class TestPackage(TestCase):
                 obj.rights_data, self.rights_service_response["rights_statements"],
                 "Rights JSON was not correctly added to bag in database.")
 
-    def test_create_archive_package(self):
+
+class TestPackageMaker(BaseTest):
+
+    def test_run(self):
         """Ensures that packages are correctly created."""
         add_bags_to_db(settings.TMP_DIR, self.expected_count, rights_data=self.rights_json, process_status=Bag.ASSIGNED_RIGHTS)
         copy_binaries(VALID_BAG_FIXTURE_DIR, settings.SRC_DIR)
@@ -160,6 +173,9 @@ class TestPackage(TestCase):
             len(listdir(settings.DEST_DIR)), self.expected_count,
             "Incorrect number of binaries in destination directory.")
 
+
+class TestPackage(BaseTest):
+
     def test_serialize_json(self):
         """Ensures that valid JSON is created"""
         add_bags_to_db(settings.TMP_DIR, self.expected_count, rights_data=self.rights_json, process_status=Bag.ASSIGNED_RIGHTS)
@@ -170,6 +186,9 @@ class TestPackage(TestCase):
             with open("{}.json".format(join(package_root, bag.bag_identifier)), "r") as f:
                 serialized = json.load(f)
             self.assertTrue(is_valid(serialized, "{}_bag".format(bag.origin)))
+
+
+class TestPackageArchiver(BaseTest):
 
     @ patch('package_bag.routines.post')
     def test_deliver_package(self, mock_post):
@@ -187,11 +206,6 @@ class TestPackage(TestCase):
         self.assertEqual(
             mock_post.call_count, self.expected_count,
             "Incorrect number of update requests made.")
-
-    def tearDown(self):
-        for d in [settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR]:
-            if isdir(d):
-                shutil.rmtree(d)
 
 
 class TestViews(TestCase):
