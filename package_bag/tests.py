@@ -174,10 +174,10 @@ class TestPackage(TestCase):
     @ patch('package_bag.routines.post')
     def test_deliver_package(self, mock_post):
         """Ensures that packages are delivered correctly."""
-        add_bags_to_db(settings.TMP_DIR, self.expected_count, rights_data=self.rights_json, process_status=Bag.PACKAGED)
+        add_bags_to_db(settings.TMP_DIR, self.expected_count, rights_data=self.rights_json, process_status=Bag.TAR)
         copy_binaries(VALID_BAG_FIXTURE_DIR, settings.TMP_DIR)
         count = 0
-        for bag in Bag.objects.filter(process_status=Bag.PACKAGED):
+        for bag in Bag.objects.filter(process_status=Bag.TAR):
             deliver_package = PackageDeliverer().run()
             self.assertIsNot(False, deliver_package)
             count += 1

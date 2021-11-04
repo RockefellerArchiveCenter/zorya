@@ -6,15 +6,15 @@ from django.db import models
 class Bag(BasePackage):
     DISCOVERED = 1
     ASSIGNED_RIGHTS = 2
-    PACKAGED = 3.1
-    TAR = 3.2
+    PACKAGED = 3
     DELIVERED = 4
+    TAR = 5
     PROCESS_STATUS_CHOICES = (
         (DISCOVERED, "Discovered"),
         (ASSIGNED_RIGHTS, "Assigned rights"),
         (PACKAGED, "Packaged"),
+        (DELIVERED, "Delivered"),
         (TAR, "Archived"),
-        (DELIVERED, "Delivered")
     )
     process_status = models.IntegerField(choices=PROCESS_STATUS_CHOICES, default=DISCOVERED)
     original_bag_name = models.CharField(max_length=255)

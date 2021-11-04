@@ -148,22 +148,51 @@ class BagDiscoverer(object):
             return new_bag.info
 
 
-# how does something get sent from one bag to another? how does batching work?
-class RightsAssigner(object):
-    """Send rights IDs to external service and receive JSON in return"""
+class BaseRoutine(object):
+    """Base class which all routines (that start by looking at the database) inherit.
+
+    Returns:
+        msg (str): human-readable representation of the routine outcome
+
+    Subclasses should implement a `process_bag` method which executes logic on
+    one bag. They should also set the following attributes:
+        start_process_status (int): a Bag process status which determines the starting
+            queryset.
+        end_process_status (int): a Bag process status which will be applied to
+            Bags after they have been successfully processed.
+        success_message (str): a message indicating that the routine completed
+            successfully.
+        idle_message (str): a message indicating that there were no objects for
+            the routine to act on.
+    """
 
     def run(self):
-        bag = Bag.objects.filter(process_status=Bag.DISCOVERED).first()
+        bag = Bag.objects.filter(process_status=self.start_process_status).first()
         if bag:
-            try:
-                rights_json = self.retrieve_rights(bag)
-                bag.rights_data = rights_json
-                bag.process_status = Bag.ASSIGNED_RIGHTS
-                bag.save()
-            except Exception as e:
-                raise Exception(f"Error assigning rights to bag {bag.bag_identifier}: {e}")
-        msg = "Rights assigned." if bag else "No bags to assign rights to found."
+            self.process_bag(bag)
+            bag.process_status = self.end_process_status
+            bag.save()
+            msg = self.success_message
+        else:
+            msg = self.idle_message
         return msg, [bag.bag_identifier] if bag else []
+
+    def process_bag(self, bag):
+        raise NotImplementedError("You must implement a `process_bag` method")
+
+
+# how does something get sent from one bag to another? how does batching work?
+class RightsAssigner(BaseRoutine):
+    """Send rights IDs to external service and receive JSON in return"""
+
+    start_process_status = Bag.DISCOVERED
+    end_process_status = Bag.ASSIGNED_RIGHTS
+    success_message = "Rights assigned."
+    idle_message = "No bags to assign rights to found."
+
+    def process_bag(self, bag):
+        rights_json = self.retrieve_rights(bag)
+        bag.rights_data = rights_json
 
     def retrieve_rights(self, bag):
         """Sends POST request to rights statement service, receives JSON in return"""
@@ -177,23 +206,19 @@ class RightsAssigner(object):
         return resp.json()['rights_statements']
 
 
-class PackageMaker(object):
+class PackageMaker(BaseRoutine):
     """Create JSON according to Ursa Major schema and package with bag"""
 
-    def run(self):
-        bag = Bag.objects.filter(process_status=Bag.ASSIGNED_RIGHTS).first()
-        if bag:
-            package_root = join(settings.DEST_DIR, bag.bag_identifier)
-            bag_tar_filename = "{}.tar.gz".format(bag.bag_identifier)
-            try:
-                self.serialize_json(bag, package_root)
-                make_tarfile(bag.bag_path, join(package_root, bag_tar_filename), remove_src=True)
-                bag.process_status = Bag.PACKAGED
-                bag.save()
-            except Exception as e:
-                raise Exception(f"Error making bag for {bag.bag_identifier}: {e}")
-        msg = "Package created." if bag else "No files ready for packaging."
-        return msg, [bag.bag_identifier] if bag else []
+    start_process_status = Bag.ASSIGNED_RIGHTS
+    end_process_status = Bag.PACKAGED
+    success_message = "Package created."
+    idle_message = "No files ready for packaging."
+
+    def process_bag(self, bag):
+        package_root = join(settings.DEST_DIR, bag.bag_identifier)
+        bag_tar_filename = "{}.tar.gz".format(bag.bag_identifier)
+        self.serialize_json(bag, package_root)
+        make_tarfile(bag.bag_path, join(package_root, bag_tar_filename), remove_src=True)
 
     def serialize_json(self, bag, package_root):
         """Serialize JSON to file"""
@@ -203,39 +228,31 @@ class PackageMaker(object):
             json.dump(bag_json, f, indent=4, sort_keys=True, default=str)
 
 
-class PackageArchiver(object):
+class PackageArchiver(BaseRoutine):
     """Create JSON according to Ursa Major schema and package with bag"""
 
-    def run(self):
-        bag = Bag.objects.filter(process_status=Bag.PACKAGED).first()
-        if bag:
-            package_root = join(settings.DEST_DIR, bag.bag_identifier)
-            package_path = "{}.tar.gz".format(package_root)
-            try:
-                make_tarfile(package_root, package_path, remove_src=True)
-                bag.process_status = Bag.TAR
-                bag.save()
-            except Exception as e:
-                raise Exception(f"Error making package for bag {bag.bag_identifier}: {e}")
-        msg = "Package archive created." if bag else "No files ready for archiving."
-        return msg, [bag.bag_identifier] if bag else []
+    start_process_status = Bag.PACKAGED
+    end_process_status = Bag.TAR
+    success_message = "Package archive created."
+    idle_message = "No files ready for archiving."
+
+    def process_bag(self, bag):
+        package_root = join(settings.DEST_DIR, bag.bag_identifier)
+        package_path = "{}.tar.gz".format(package_root)
+        make_tarfile(package_root, package_path, remove_src=True)
 
 
-class PackageDeliverer(object):
+class PackageDeliverer(BaseRoutine):
     """Deliver package to Ursa Major"""
 
-    def run(self):
+    start_process_status = Bag.TAR
+    end_process_status = Bag.DELIVERED
+    success_message = "Package delivered."
+    idle_message = "No packages to deliver."
+
+    def process_bag(self, bag):
         dest_dir = settings.DEST_DIR
-        bag = Bag.objects.filter(process_status=Bag.TAR).first()
-        if bag:
-            try:
-                self.deliver_data(bag, dest_dir, settings.DELIVERY_URL)
-                bag.process_status = Bag.DELIVERED
-                bag.save()
-            except Exception as e:
-                raise Exception(f"Error delivering bag {bag.bag_identifier}: {e}")
-        msg = "Package delivered." if bag else "No packages to deliver."
-        return msg, [bag.bag_identifier] if bag else []
+        self.deliver_data(bag, dest_dir, settings.DELIVERY_URL)
 
     def deliver_data(self, bag, dest_dir, url):
         """Send data to Ursa Major"""
