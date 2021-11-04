@@ -21,7 +21,7 @@ boto3==1.19.10
     # via
     #   -r requirements.in
     #   moto
-botocore==1.22.10
+botocore==1.22.11
     # via
     #   boto3
     #   moto
