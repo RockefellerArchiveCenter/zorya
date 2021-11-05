@@ -35,7 +35,7 @@ class PackageMakerView(RoutineView):
 
 
 class PackageArchiverView(RoutineView):
-    """Triggers the PackageMaker routine."""
+    """Triggers the PackageArchiver routine."""
     routine = PackageArchiver
 
 
