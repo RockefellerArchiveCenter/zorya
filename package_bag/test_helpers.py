@@ -1,5 +1,4 @@
 import shutil
-from datetime import datetime
 from os import listdir, makedirs
 from os.path import isdir, isfile, join
 from random import choice
@@ -8,7 +7,7 @@ from .models import Bag
 from .routines import BagDiscoverer
 
 RIGHTS_ID = "1 2 3"
-END_DATE = datetime.now().strftime("%Y-%m-%d")
+END_DATE = "2021-11-04"
 
 
 def copy_binaries(bag_fixture_dir, dest_dir):
