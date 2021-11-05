@@ -31,7 +31,7 @@ class S3ObjectDownloader(object):
             file_to_download = list_to_download[0]
             downloaded_file = self.download_object_from_s3(file_to_download)
             self.delete_object_from_s3(file_to_download)
-        msg = "Files downloaded." if list_to_download else "No files ready to be downloaded."
+        msg = "File downloaded." if list_to_download else "No files ready to be downloaded."
         return msg, [downloaded_file] if list_to_download else []
 
     def list_to_download(self):
@@ -181,18 +181,16 @@ class BaseRoutine(object):
         raise NotImplementedError("You must implement a `process_bag` method")
 
 
-# how does something get sent from one bag to another? how does batching work?
 class RightsAssigner(BaseRoutine):
     """Send rights IDs to external service and receive JSON in return"""
 
     start_process_status = Bag.DISCOVERED
     end_process_status = Bag.ASSIGNED_RIGHTS
     success_message = "Rights assigned."
-    idle_message = "No bags to assign rights to found."
+    idle_message = "No bags waiting for rights assignment."
 
     def process_bag(self, bag):
-        rights_json = self.retrieve_rights(bag)
-        bag.rights_data = rights_json
+        bag.rights_data = self.retrieve_rights(bag)
 
     def retrieve_rights(self, bag):
         """Sends POST request to rights statement service, receives JSON in return"""
@@ -229,7 +227,7 @@ class PackageMaker(BaseRoutine):
 
 
 class PackageArchiver(BaseRoutine):
-    """Create JSON according to Ursa Major schema and package with bag"""
+    """Create TAR of package"""
 
     start_process_status = Bag.PACKAGED
     end_process_status = Bag.TAR

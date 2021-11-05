@@ -132,6 +132,7 @@ class TestRightsAssigner(TestCase):
         with open(join(RIGHTS_FIXTURE_DIR, 'rights_service_response.json')) as json_file:
             self.rights_service_response = json.load(json_file)
         set_up_directories([settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR])
+        self.records_in_db = 3
 
     @patch('package_bag.routines.post')
     def test_run(self, mock_rights):
@@ -141,11 +142,11 @@ class TestRightsAssigner(TestCase):
         for bag in Bag.objects.filter(process_status=Bag.DISCOVERED):
             assign_rights = RightsAssigner().run()
             mock_rights.assert_called_with(
-                'http://aquila-web:8000/rights',
+                settings.RIGHTS_URL,
                 json={'identifiers': RIGHTS_ID, 'start_date': None, 'end_date': END_DATE})
             self.assertIsNot(False, assign_rights)
         self.assertEqual(
-            mock_rights.call_count, 3,
+            mock_rights.call_count, self.records_in_db,
             "Incorrect number of calls to rights service.")
         for obj in Bag.objects.all():
             self.assertEqual(
@@ -173,6 +174,7 @@ class TestPackageMaker(TestCase):
 
     def setUp(self):
         set_up_directories([settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR])
+        self.records_in_db = 3
 
     def test_run(self):
         """Ensures that packages are correctly created."""
@@ -184,7 +186,7 @@ class TestPackageMaker(TestCase):
                 len(listdir(settings.TMP_DIR)), 0,
                 "Temporary directory is not empty.")
         self.assertEqual(
-            len(listdir(settings.DEST_DIR)), 3,
+            len(listdir(settings.DEST_DIR)), self.records_in_db,
             "Incorrect number of binaries in destination directory.")
 
     def tearDown(self):
@@ -198,6 +200,7 @@ class TestPackageArchiver(TestCase):
 
     def setUp(self):
         set_up_directories([settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR])
+        self.records_in_db = 1
 
     def test_run(self):
         """Ensures that packages are correctly archived."""
@@ -206,7 +209,7 @@ class TestPackageArchiver(TestCase):
             archive_package = PackageArchiver().run()
             self.assertIsNot(False, archive_package)
         self.assertEqual(
-            len(listdir(settings.DEST_DIR)), 1,
+            len(listdir(settings.DEST_DIR)), self.records_in_db,
             "Incorrect number of binaries in destination directory.")
         for package in listdir(settings.DEST_DIR):
             with tarfile.open(join(settings.DEST_DIR, package), "r") as tf:
@@ -228,6 +231,7 @@ class TestPackageDeliverer(TestCase):
 
     def setUp(self):
         set_up_directories([settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR])
+        self.records_in_db = 3
 
     @patch('package_bag.routines.post')
     def test_run(self, mock_post):
@@ -239,10 +243,10 @@ class TestPackageDeliverer(TestCase):
             self.assertIsNot(False, deliver_package)
             count += 1
         self.assertEqual(
-            count, 3,
+            count, self.records_in_db,
             "Incorrect number of bags processed.")
         self.assertEqual(
-            mock_post.call_count, 3,
+            mock_post.call_count, self.records_in_db,
             "Incorrect number of update requests made.")
 
     def tearDown(self):
