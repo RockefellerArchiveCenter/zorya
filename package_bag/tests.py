@@ -19,8 +19,9 @@ from .routines import (BagDiscoverer, PackageArchiver, PackageDeliverer,
                        PackageMaker, RightsAssigner, S3ObjectDownloader)
 from .test_helpers import (END_DATE, RIGHTS_ID, copy_binaries,
                            set_up_directories)
-from .views import (BagDiscovererView, PackageDelivererView, PackageMakerView,
-                    RightsAssignerView, S3ObjectDownloaderView)
+from .views import (BagDiscovererView, PackageArchiverView,
+                    PackageDelivererView, PackageMakerView, RightsAssignerView,
+                    S3ObjectDownloaderView)
 
 VALID_BAG_FIXTURE_DIR = join(settings.BASE_DIR, 'package_bag', 'fixtures', 'bags', 'valid')
 INVALID_BAG_FIXTURE_DIR = join(settings.BASE_DIR, 'package_bag', 'fixtures', 'bags', 'invalid')
@@ -266,6 +267,7 @@ class TestViews(TestCase):
                 ("bagdiscoverer", BagDiscovererView),
                 ("rightsassigner", RightsAssignerView),
                 ("packagemaker", PackageMakerView),
+                ("packagearchiver", PackageArchiverView),
                 ("packagedeliverer", PackageDelivererView)]:
             request = self.factory.post(reverse(view_str))
             response = view.as_view()(request)

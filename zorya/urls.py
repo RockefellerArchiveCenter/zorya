@@ -17,8 +17,9 @@ from django.conf.urls import url
 from django.contrib import admin
 from django.urls import include, path
 from package_bag.views import (BagDiscovererView, BagViewSet,
-                               PackageDelivererView, PackageMakerView,
-                               RightsAssignerView, S3ObjectDownloaderView)
+                               PackageArchiverView, PackageDelivererView,
+                               PackageMakerView, RightsAssignerView,
+                               S3ObjectDownloaderView)
 from rest_framework import routers
 
 router = routers.DefaultRouter()
@@ -29,6 +30,7 @@ urlpatterns = [
     path('discover-bags/', BagDiscovererView.as_view(), name="bagdiscoverer"),
     path('assign-rights/', RightsAssignerView.as_view(), name="rightsassigner"),
     path('make-package/', PackageMakerView.as_view(), name="packagemaker"),
+    path('archive-package/', PackageArchiverView.as_view(), name="packagearchiver"),
     path('deliver-package/', PackageDelivererView.as_view(), name="packagedeliverer"),
     path('admin/', admin.site.urls),
     path('', include(router.urls)),

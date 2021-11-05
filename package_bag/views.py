@@ -2,8 +2,8 @@ from asterism.views import RoutineView
 from rest_framework.viewsets import ModelViewSet
 
 from .models import Bag
-from .routines import (BagDiscoverer, PackageDeliverer, PackageMaker,
-                       RightsAssigner, S3ObjectDownloader)
+from .routines import (BagDiscoverer, PackageArchiver, PackageDeliverer,
+                       PackageMaker, RightsAssigner, S3ObjectDownloader)
 from .serializers import BagSerializer
 
 
@@ -32,6 +32,11 @@ class RightsAssignerView(RoutineView):
 class PackageMakerView(RoutineView):
     """Triggers the PackageMaker routine."""
     routine = PackageMaker
+
+
+class PackageArchiverView(RoutineView):
+    """Triggers the PackageArchiver routine."""
+    routine = PackageArchiver
 
 
 class PackageDelivererView(RoutineView):
