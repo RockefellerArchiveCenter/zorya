@@ -1,0 +1,32 @@
+{
+    "identifier": "8a20be92-0b6d-4cb6-964e-f90764302c56",
+    "origin": "digitization",
+    "rights_statements": [
+        {
+            "end_date": null,
+            "note": "These materials may only be accessed in a reading room setting.",
+            "other_basis": "donor",
+            "rights_basis": "other",
+            "rights_granted": [
+                {
+                    "act": "publish",
+                    "end_date": null,
+                    "grant_restriction": "disallow",
+                    "note": "",
+                    "start_date": "1970-01-01"
+                }
+            ],
+            "start_date": "2019-01-01"
+        },
+        {
+            "copyright_status": "copyrighted",
+            "determination_date": "2021-08-02",
+            "end_date": "2092-12-31",
+            "jurisdiction": "us",
+            "note": "Copyright term 120 years from date of creation.",
+            "rights_basis": "copyright",
+            "rights_granted": [],
+            "start_date": "1970-01-01"
+        }
+    ]
+}
