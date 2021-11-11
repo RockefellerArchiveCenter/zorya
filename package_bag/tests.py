@@ -154,6 +154,15 @@ class TestRightsAssigner(TestCase):
                 obj.rights_data, self.rights_service_response["rights_statements"],
                 "Rights JSON was not correctly added to bag in database.")
 
+    @patch('package_bag.routines.post')
+    def test_run_exception(self, mock_rights):
+        reason = "foobar"
+        mock_rights.return_value.status_code = 400
+        mock_rights.return_value.reason = reason
+        with self.assertRaises(Exception) as exc:
+            RightsAssigner().run()
+        self.assertIn(reason, str(exc.exception))
+
     def test_serialize_json(self):
         """Ensures that valid JSON is created"""
         copy_binaries(VALID_BAG_FIXTURE_DIR, settings.TMP_DIR)
