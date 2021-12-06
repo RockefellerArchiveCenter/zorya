@@ -29,7 +29,8 @@ Or, if you want to remove all data
 * Validate and rename bag
 * Get rights information from external service
 * Create delivery package
-* Send delivery package to an external application
+* Create TAR archive of delivery package
+* Send archived delivery package to an external application
 
 ### Routes
 
@@ -41,6 +42,7 @@ Or, if you want to remove all data
 |POST|/discover-bags| |200|Discovers bags waiting to be processed|
 |POST|/assign-rights| |200|Fetches rights information from external service|
 |POST|/make-package| |200|Assembles a package to be delivered to an external service|
+|POST|/archive-package| |200|Archives a package to be delivered to an external service|
 |POST|/deliver-package| |200|Delivers package to an external service|
 
 
