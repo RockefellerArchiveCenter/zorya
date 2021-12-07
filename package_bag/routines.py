@@ -167,14 +167,24 @@ class BaseRoutine(object):
     """
 
     def run(self):
-        bag = Bag.objects.filter(process_status=self.start_process_status).first()
-        if bag:
-            self.process_bag(bag)
-            bag.process_status = self.end_process_status
-            bag.save()
-            msg = self.success_message
+        if not Bag.objects.filter(process_status=self.in_process_status).exists():
+            bag = Bag.objects.filter(process_status=self.start_process_status).first()
+            if bag:
+                bag.process_status = self.in_process_status
+                bag.save()
+                try:
+                    self.process_bag(bag)
+                except Exception:
+                    bag.process_status = self.start_process_status
+                    bag.save()
+                    raise
+                bag.process_status = self.end_process_status
+                bag.save()
+                msg = self.success_message
+            else:
+                msg = self.idle_message
         else:
-            msg = self.idle_message
+            msg = "Service currently running"
         return msg, [bag.bag_identifier] if bag else []
 
     def process_bag(self, bag):
@@ -185,6 +195,7 @@ class RightsAssigner(BaseRoutine):
     """Send rights IDs to external service and receive JSON in return"""
 
     start_process_status = Bag.DISCOVERED
+    in_process_status = Bag.ASSIGNING_RIGHTS
     end_process_status = Bag.ASSIGNED_RIGHTS
     success_message = "Rights assigned."
     idle_message = "No bags waiting for rights assignment."
@@ -208,6 +219,7 @@ class PackageMaker(BaseRoutine):
     """Create JSON according to Ursa Major schema and package with bag"""
 
     start_process_status = Bag.ASSIGNED_RIGHTS
+    in_process_status = Bag.PACKAGING
     end_process_status = Bag.PACKAGED
     success_message = "Package created."
     idle_message = "No files ready for packaging."
@@ -230,6 +242,7 @@ class PackageArchiver(BaseRoutine):
     """Create TAR of package"""
 
     start_process_status = Bag.PACKAGED
+    in_process_status = Bag.ARCHIVING
     end_process_status = Bag.TAR
     success_message = "Package archive created."
     idle_message = "No files ready for archiving."
@@ -244,6 +257,7 @@ class PackageDeliverer(BaseRoutine):
     """Deliver package to Ursa Major"""
 
     start_process_status = Bag.TAR
+    in_process_status = Bag.DELIVERING
     end_process_status = Bag.DELIVERED
     success_message = "Package delivered."
     idle_message = "No packages to deliver."
