@@ -1,7 +1,7 @@
 SECRET_KEY = 'ny033+z#r)$cpjl9gnbi*v=p8rjl2(%3-f&*v(mhi4#^eur9u8' # used by Django to create hashes (string)
-DEBUG = True
-ALLOWED_HOSTS = ['localhost', 'zorya-web']
-SQL_ENGINE = 'django.db.backends.postgresql' # the database engine used by Pictor (string, one of django.db.backends)
+DEBUG = True # run Django in debug mode, which outputs stack traces to the UI, set to False for production (boolean)
+ALLOWED_HOSTS = ['localhost', 'zorya-web'] # hosts Zorya will respond to (list of strings)
+SQL_ENGINE = 'django.db.backends.postgresql' # the database engine used by Zorya (string, one of django.db.backends)
 SQL_DATABASE = 'postgres' # name of the application database (string)
 SQL_USER = 'postgres' # name of the application database user (string)
 SQL_PASSWORD = 'postgres' # password for the application database (string)
