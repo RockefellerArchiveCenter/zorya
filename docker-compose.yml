@@ -11,7 +11,7 @@ services:
     volumes:
       - .:/code
     ports:
-      - "8011:8011"
+      - "${APPLICATION_PORT:-8011}:${APPLICATION_PORT:-8011}"
     depends_on:
       - zorya-db
 
