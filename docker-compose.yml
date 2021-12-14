@@ -9,7 +9,7 @@ services:
     build: .
     entrypoint: /code/entrypoint.sh
     environment:
-      - APPLICATION_PORT=${APPLICATION_PORT:-8012}
+      - APPLICATION_PORT=${APPLICATION_PORT:-8011}
     volumes:
       - .:/code
     ports:
