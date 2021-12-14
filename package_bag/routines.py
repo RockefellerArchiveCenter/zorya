@@ -117,10 +117,10 @@ class BagDiscoverer(object):
     def discover_next_bag(self):
         """Looks in a given directory for compressed bags, adds to list to process"""
         bag = None
-        for bag in listdir(self.src_dir):
-            ext = splitext(bag)[-1]
+        for directory in listdir(self.src_dir):
+            ext = splitext(directory)[-1]
             if ext in ['.tar', '.tgz', '.gz']:
-                bag = join(self.src_dir, bag)
+                bag = join(self.src_dir, directory)
         return bag
 
     def unpack_rename(self, bag_path, tmp):
