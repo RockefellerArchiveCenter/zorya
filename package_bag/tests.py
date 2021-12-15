@@ -49,7 +49,7 @@ class TestS3Download(TestCase):
     def configure_uploader(self, upload_list):
         """Sets up an 3ObjectDownloader with mocked s3 bucket and objects."""
         object_downloader = S3ObjectDownloader()
-        region_name, access_key, secret_key, bucket = settings.S3
+        region_name, access_key, secret_key, bucket = ("us-east-1", "123456789", "987654321", "test-bucket")
         s3 = boto3.resource(service_name='s3', region_name=region_name, aws_access_key_id=access_key, aws_secret_access_key=secret_key)
         s3.create_bucket(Bucket=bucket)
         s3_client = boto3.client('s3', region_name=region_name)
