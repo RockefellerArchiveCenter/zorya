@@ -8,9 +8,9 @@ SQL_PASSWORD = 'postgres'  # password for the application database (string)
 SQL_HOST = 'zorya-db'  # host for the application database (string)
 SQL_PORT = 5432  # port on which the application database can be reached (integer)
 BASE_DIR = ''
-SRC_DIR = '{}/src'.format(BASE_DIR)  # Source directory (string)
-TMP_DIR = '{}/tmp'.format(BASE_DIR)  # Temporary directory (string)
-DEST_DIR = '{}/dest'.format(BASE_DIR)  # Destination directory (string)
+SRC_DIR = '{}/src_dir'.format(BASE_DIR)  # Source directory (string)
+TMP_DIR = '{}/tmp_dir'.format(BASE_DIR)  # Temporary directory (string)
+DEST_DIR = '{}/dest_dir'.format(BASE_DIR)  # Destination directory (string)
 
 DELIVERY_URL = 'http://ursa-major-web:8005/store-bags/'  # URL to which to deliver packages (string)
 RIGHTS_URL = 'http://aquila-web:8000/rights'  # URL of rights assembly service (string)
