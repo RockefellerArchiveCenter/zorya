@@ -78,8 +78,16 @@ WSGI_APPLICATION = 'zorya.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
-DATABASES = CF.DATABASES
-
+DATABASES = {
+    "default": {
+        "ENGINE": CF.SQL_ENGINE,
+        "NAME": CF.SQL_DATABASE,
+        "USER": CF.SQL_USER,
+        "PASSWORD": CF.SQL_PASSWORD,
+        "HOST": CF.SQL_HOST,
+        "PORT": CF.SQL_PORT,
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
