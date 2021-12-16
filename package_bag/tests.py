@@ -67,6 +67,12 @@ class TestS3Download(TestCase):
             response.status_code, 200, "View error: {}".format(response.data))
 
     @mock_s3
+    def test_run(self):
+        self.configure_uploader(["329d56f6f0424bfb8551d148a125dabb.tar"])
+        S3ObjectDownloader().run()
+        self.assertTrue(Bag.objects.filter(original_bag_name=join(settings.SRC_DIR, "329d56f6f0424bfb8551d148a125dabb.tar")).exists())
+
+    @mock_s3
     def test_get_list_to_download(self):
         """Tests that expected files are downloaded"""
         already_in_db = Bag.objects.get(pk=1).original_bag_name.split("/")[-1]
