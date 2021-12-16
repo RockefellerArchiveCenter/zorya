@@ -1,0 +1,9 @@
+Bag-Software-Agent: bagit.py v1.7.0 <https://github.com/LibraryOfCongress/bagit-python>
+BagIt-Profile-Identifier: https://gist.githubusercontent.com/bonniegee/a78e7c2df89fa9bef8584efd97984624/raw/dccb03e6a5379b9b180403b98c1718ae05152417/test_bagit_profile_for_zorya.json
+Bagging-Date: 2020-07-15
+End-Date: 1955-12-24
+Origin: legacy_digital
+Payload-Oxum: 10.1
+Rights-ID: 11
+Rights-ID: 20
+Start-Date: 1891-04-05

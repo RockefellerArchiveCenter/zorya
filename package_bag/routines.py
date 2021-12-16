@@ -1,14 +1,14 @@
 import json
 import tarfile
-from os import listdir, mkdir, remove, rename
-from os.path import isdir, join, splitext
+from os import mkdir, remove, rename
+from os.path import isdir, join
 from uuid import uuid4
 
 import bagit
 import bagit_profile
 import boto3
 from asterism.bagit_helpers import validate
-from asterism.file_helpers import make_tarfile, remove_file_or_dir
+from asterism.file_helpers import make_tarfile
 from botocore.exceptions import ClientError
 from package_bag.helpers import expected_file_name
 from package_bag.serializers import BagSerializer
@@ -31,6 +31,12 @@ class S3ObjectDownloader(object):
             file_to_download = list_to_download[0]
             downloaded_file = self.download_object_from_s3(file_to_download)
             self.delete_object_from_s3(file_to_download)
+            new_bag = Bag.objects.create(
+                original_bag_name=downloaded_file,
+                bag_identifier=str(uuid4()),
+                bag_path=downloaded_file,
+                process_status=Bag.DISCOVERED)
+            new_bag.save()
         msg = "File downloaded." if list_to_download else "No files ready to be downloaded."
         return msg, [downloaded_file] if list_to_download else []
 
@@ -79,75 +85,6 @@ class S3ObjectDownloader(object):
             raise Exception("Error connecting to AWS: {}".format(e))
 
 
-class BagDiscoverer(object):
-    """
-    Validates bag structure and bag info file, renames bag with unique ID
-    """
-
-    def __init__(self):
-        self.src_dir = settings.SRC_DIR
-        self.tmp_dir = settings.TMP_DIR
-        for dir in [self.src_dir, self.tmp_dir]:
-            if not isdir(dir):
-                raise Exception("Directory does not exist", dir)
-        # TODO: check for json profile
-
-    def run(self):
-        bag = self.discover_next_bag()
-        if bag:
-            try:
-                bag_id = self.unpack_rename(bag, self.tmp_dir)
-                bag_path = join(self.tmp_dir, bag_id)
-                validate(bag_path)
-                bag_data = self.validate_metadata(bag_path)
-                new_bag = Bag.objects.create(
-                    original_bag_name=bag,
-                    bag_identifier=bag_id,
-                    bag_path=bag_path,
-                    process_status=Bag.DISCOVERED)
-                for key in ["Origin", "Rights-ID", "Start-Date", "End-Date"]:
-                    setattr(new_bag, key.lower().replace("-", "_"), bag_data.get(key))
-                new_bag.save()
-            except Exception as e:
-                remove_file_or_dir(bag_path)
-                raise Exception("Error processing discovered bag {}: {}".format(bag, str(e)))
-        msg = "Bag discovered, renamed and saved." if bag else "No bags were found."
-        return (msg, bag_id) if bag else (msg, None)
-
-    def discover_next_bag(self):
-        """Looks in a given directory for compressed bags, adds to list to process"""
-        bag = None
-        for directory in listdir(self.src_dir):
-            ext = splitext(directory)[-1]
-            if ext in ['.tar', '.tgz', '.gz']:
-                bag = join(self.src_dir, directory)
-        return bag
-
-    def unpack_rename(self, bag_path, tmp):
-        """Unpacks tarfile to a new directory with the name of the bag identifier (a UUID)"""
-        bag_identifier = str(uuid4())
-        tf = tarfile.open(bag_path, 'r')
-        tf.extractall(tmp)
-        original_bag_name = tf.getnames()[0]
-        tf.close()
-        rename(join(tmp, original_bag_name),
-               join(tmp, bag_identifier))
-        remove(bag_path)
-        return bag_identifier
-
-    def validate_metadata(self, bag_path):
-        """Validates the bag-info.txt file against the bagit profile"""
-        new_bag = bagit.Bag(bag_path)
-        bagit_profile_json = "zorya_bagit_profile.json"
-        with open(join(settings.BASE_DIR, "package_bag", bagit_profile_json), "r") as fp:
-            data = json.load(fp)
-        profile = bagit_profile.Profile(bagit_profile_json, profile=data)
-        if not profile.validate(new_bag):
-            raise TypeError(profile.report.errors)
-        else:
-            return new_bag.info
-
-
 class BaseRoutine(object):
     """Base class which all routines (that start by looking at the database) inherit.
 
@@ -190,6 +127,56 @@ class BaseRoutine(object):
 
     def process_bag(self, bag):
         raise NotImplementedError("You must implement a `process_bag` method")
+
+
+class BagDiscoverer(BaseRoutine):
+    """
+    Validates bag structure and bag info file, renames bag with unique ID
+    """
+    start_process_status = Bag.DOWNLOADED
+    in_process_status = Bag.DISCOVERING
+    end_process_status = Bag.DISCOVERED
+    success_message = "Bag renamed, unpacked, and validated."
+    idle_message = "No bags were found."
+
+    def __init__(self):
+        self.src_dir = settings.SRC_DIR
+        self.tmp_dir = settings.TMP_DIR
+        for dir in [self.src_dir, self.tmp_dir]:
+            if not isdir(dir):
+                raise Exception("Directory does not exist", dir)
+
+    def process_bag(self, bag):
+        bag.bag_path = self.unpack_rename(bag)
+        bag.save()
+        validate(bag.bag_path)
+        bag_data = self.validate_metadata(bag)
+        for key in ["Origin", "Rights-ID", "Start-Date", "End-Date"]:
+            setattr(bag, key.lower().replace("-", "_"), bag_data.get(key))
+        bag.save()
+
+    def unpack_rename(self, bag):
+        """Unpacks tarfile to a new directory with the name of the bag identifier (a UUID)"""
+        tf = tarfile.open(bag.bag_path, 'r')
+        tf.extractall(self.tmp_dir)
+        original_bag_name = tf.getnames()[0]
+        tf.close()
+        rename(join(self.tmp_dir, original_bag_name),
+               join(self.tmp_dir, bag.bag_identifier))
+        remove(bag.bag_path)
+        return join(self.tmp_dir, bag.bag_identifier)
+
+    def validate_metadata(self, bag):
+        """Validates the bag-info.txt file against the bagit profile"""
+        new_bag = bagit.Bag(bag.bag_path)
+        bagit_profile_json = "zorya_bagit_profile.json"
+        with open(join(settings.BASE_DIR, "package_bag", bagit_profile_json), "r") as fp:
+            data = json.load(fp)
+        profile = bagit_profile.Profile(bagit_profile_json, profile=data)
+        if not profile.validate(new_bag):
+            raise TypeError(profile.report.errors)
+        else:
+            return new_bag.info
 
 
 class RightsAssigner(BaseRoutine):

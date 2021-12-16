@@ -96,8 +96,10 @@ class TestS3Download(TestCase):
 
 
 class TestBagDiscoverer(TestCase):
+    fixtures = ["discover.json"]
+
     def setUp(self):
-        set_up_directories([settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR])
+        set_up_directories([settings.TMP_DIR, settings.SRC_DIR])
 
     def test_run(self):
         """Ensures that bags are correctly discovered."""
@@ -109,19 +111,12 @@ class TestBagDiscoverer(TestCase):
             discover = BagDiscoverer().run()
             count += 1
         self.assertTrue(isinstance(discover, tuple))
-        self.assertTupleEqual(discover, ('No bags were found.', None), "Incorrect response when no bags are found.")
+        self.assertTupleEqual(discover, ('No bags were found.', []), "Incorrect response when no bags are found.")
         self.assertEqual(len(Bag.objects.all()), valid_bags, "Wrong number of bags saved in database.")
-        self.assertEqual(len(listdir(settings.TMP_DIR)), valid_bags, "Invalid bags were not deleted.")
-
-        shutil.rmtree(settings.SRC_DIR)
-        shutil.copytree(INVALID_BAG_FIXTURE_DIR, settings.SRC_DIR)
-        with self.assertRaises(Exception) as exc:
-            BagDiscoverer().run()
-        self.assertIn("Error processing discovered bag", str(exc.exception))
         self.assertEqual(len(listdir(settings.TMP_DIR)), valid_bags)
 
     def tearDown(self):
-        for d in [settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR]:
+        for d in [settings.TMP_DIR, settings.SRC_DIR]:
             if isdir(d):
                 shutil.rmtree(d)
 
