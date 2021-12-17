@@ -6,4 +6,4 @@ echo "Apply database migrations"
 
 #Start server
 echo "Starting server"
-python manage.py runserver 0.0.0.0:8011
+python manage.py runserver 0.0.0.0:${APPLICATION_PORT}

@@ -8,10 +8,12 @@ services:
   zorya-web:
     build: .
     entrypoint: /code/entrypoint.sh
+    environment:
+      - APPLICATION_PORT=${APPLICATION_PORT:-8011}
     volumes:
       - .:/code
     ports:
-      - "8011:8011"
+      - "${APPLICATION_PORT:-8011}:${APPLICATION_PORT:-8011}"
     depends_on:
       - zorya-db
 
