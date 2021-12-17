@@ -35,7 +35,7 @@ class S3ObjectDownloader(object):
                 original_bag_name=downloaded_file,
                 bag_identifier=str(uuid4()),
                 bag_path=downloaded_file,
-                process_status=Bag.DISCOVERED)
+                process_status=Bag.DOWNLOADED)
             new_bag.save()
         msg = "File downloaded." if list_to_download else "No files ready to be downloaded."
         return msg, [downloaded_file] if list_to_download else []
@@ -153,7 +153,6 @@ class BagDiscoverer(BaseRoutine):
         bag_data = self.validate_metadata(bag)
         for key in ["Origin", "Rights-ID", "Start-Date", "End-Date"]:
             setattr(bag, key.lower().replace("-", "_"), bag_data.get(key))
-        bag.save()
 
     def unpack_rename(self, bag):
         """Unpacks tarfile to a new directory with the name of the bag identifier (a UUID)"""
