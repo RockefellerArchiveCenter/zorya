@@ -2,7 +2,7 @@ import json
 import shutil
 import tarfile
 from os import listdir
-from os.path import isdir, join
+from os.path import exists, isdir, join
 from unittest.mock import patch
 
 import boto3
@@ -16,12 +16,13 @@ from zorya import settings
 
 from .models import Bag
 from .routines import (BagDiscoverer, PackageArchiver, PackageDeliverer,
-                       PackageMaker, RightsAssigner, S3ObjectDownloader)
+                       PackageMaker, RightsAssigner, S3ObjectDownloader,
+                       S3ObjectFinder)
 from .test_helpers import (END_DATE, RIGHTS_ID, copy_binaries,
                            set_up_directories)
 from .views import (BagDiscovererView, PackageArchiverView,
                     PackageDelivererView, PackageMakerView, RightsAssignerView,
-                    S3ObjectDownloaderView)
+                    S3ObjectDownloaderView, S3ObjectFinderView)
 
 VALID_BAG_FIXTURE_DIR = join(settings.BASE_DIR, 'package_bag', 'fixtures', 'bags', 'valid')
 INVALID_BAG_FIXTURE_DIR = join(settings.BASE_DIR, 'package_bag', 'fixtures', 'bags', 'invalid')
@@ -38,6 +39,49 @@ class TestHelpers(TestCase):
             self.assertTrue(expected_file_name(filename))
         for filename in failing_filenames:
             self.assertFalse(expected_file_name(filename))
+
+
+class TestS3Finder(TestCase):
+    fixtures = ["s3_finder.json"]
+
+    def setUp(self):
+        self.factory = APIRequestFactory()
+
+    def configure_uploader(self, upload_list):
+        """Sets up an 3ObjectDownloader with mocked s3 bucket and objects."""
+        object_finder = S3ObjectFinder()
+        region_name, access_key, secret_key, bucket = settings.S3
+        s3 = boto3.resource(service_name='s3', region_name=region_name, aws_access_key_id=access_key, aws_secret_access_key=secret_key)
+        s3.create_bucket(Bucket=bucket)
+        s3_client = boto3.client('s3', region_name=region_name)
+        object_finder.bucket = s3.Bucket(bucket)
+        for item in upload_list:
+            s3_client.put_object(Bucket=bucket, Key=item, Body='')
+        return object_finder
+
+    @mock_s3
+    def test_s3_finder_view(self):
+        self.configure_uploader(["4b4334fba43a4cf4940f6c8e6d892f60.tar"])
+        request = self.factory.post(reverse("s3objectfinder"))
+        response = S3ObjectFinderView.as_view()(request)
+        self.assertEqual(
+            response.status_code, 200, "View error: {}".format(response.data))
+
+    @mock_s3
+    def test_run(self):
+        self.configure_uploader(["329d56f6f0424bfb8551d148a125dabb.tar"])
+        S3ObjectFinder().run()
+        self.assertTrue(Bag.objects.filter(original_bag_name="329d56f6f0424bfb8551d148a125dabb.tar").exists())
+
+    @mock_s3
+    def test_get_list_to_download(self):
+        """Tests that expected files are downloaded"""
+        already_in_db = Bag.objects.get(pk=1).original_bag_name.split("/")[-1]
+        objects_in_bucket = ["7d24b2da347b48fe9e59d8c5d4424235.tar", "4b4334fba43a4cf4940f6c8e6d892f60.tar", "example_file.txt"]
+        objects_in_bucket.append(already_in_db)
+        object_finder = self.configure_uploader(objects_in_bucket)
+        list_to_download = object_finder.list_to_download()
+        self.assertEqual(len(list_to_download), 2)
 
 
 class TestS3Download(TestCase):
@@ -60,7 +104,7 @@ class TestS3Download(TestCase):
 
     @mock_s3
     def test_s3_download_view(self):
-        self.configure_uploader(["4b4334fba43a4cf4940f6c8e6d892f60.tar"])
+        self.configure_uploader(["4b1bf39c6b6745408ac8de9a5aec34ba.tar"])
         request = self.factory.post(reverse("s3objectdownloader"))
         response = S3ObjectDownloaderView.as_view()(request)
         self.assertEqual(
@@ -68,19 +112,9 @@ class TestS3Download(TestCase):
 
     @mock_s3
     def test_run(self):
-        self.configure_uploader(["329d56f6f0424bfb8551d148a125dabb.tar"])
+        self.configure_uploader(["4b1bf39c6b6745408ac8de9a5aec34ba.tar"])
         S3ObjectDownloader().run()
-        self.assertTrue(Bag.objects.filter(original_bag_name=join(settings.SRC_DIR, "329d56f6f0424bfb8551d148a125dabb.tar")).exists())
-
-    @mock_s3
-    def test_get_list_to_download(self):
-        """Tests that expected files are downloaded"""
-        already_in_db = Bag.objects.get(pk=1).original_bag_name.split("/")[-1]
-        objects_in_bucket = ["7d24b2da347b48fe9e59d8c5d4424235.tar", "4b4334fba43a4cf4940f6c8e6d892f60.tar", "example_file.txt"]
-        objects_in_bucket.append(already_in_db)
-        object_downloader = self.configure_uploader(objects_in_bucket)
-        list_to_download = object_downloader.list_to_download()
-        self.assertEqual(len(list_to_download), 2)
+        self.assertTrue(exists(join(settings.SRC_DIR, "4b1bf39c6b6745408ac8de9a5aec34ba.tar")))
 
     @mock_s3
     def test_download_object_from_s3(self,):
@@ -92,13 +126,14 @@ class TestS3Download(TestCase):
         self.assertIn(object_to_download, listdir(object_downloader.src_dir))
 
     @mock_s3
-    def test_delete_object_from_s3(self,):
+    def test_delete_object_from_s3(self):
         """Tests that object is deleted from the S3 bucket"""
         set_up_directories([settings.SRC_DIR])
         object_downloader = self.configure_uploader(["7d24b2da347b48fe9e59d8c5d4424235.tar"])
         object_to_delete = "7d24b2da347b48fe9e59d8c5d4424235.tar"
         object_downloader.delete_object_from_s3(object_to_delete)
-        self.assertNotIn(object_to_delete, object_downloader.list_to_download())
+        files_in_bucket = [bucket_object.key for bucket_object in object_downloader.bucket.objects.all()]
+        self.assertNotIn(object_to_delete, files_in_bucket)
 
 
 class TestBagDiscoverer(TestCase):

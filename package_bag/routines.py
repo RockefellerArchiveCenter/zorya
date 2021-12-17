@@ -18,27 +18,22 @@ from zorya import settings
 from .models import Bag
 
 
-class S3ObjectDownloader(object):
+class S3ObjectFinder(object):
     def __init__(self):
         region_name, access_key, secret_key, bucket = settings.S3
         s3 = boto3.resource(service_name='s3', region_name=region_name, aws_access_key_id=access_key, aws_secret_access_key=secret_key)
         self.bucket = s3.Bucket(bucket)
-        self.src_dir = settings.SRC_DIR
 
     def run(self):
         list_to_download = self.list_to_download()
-        if list_to_download:
-            file_to_download = list_to_download[0]
-            downloaded_file = self.download_object_from_s3(file_to_download)
-            self.delete_object_from_s3(file_to_download)
+        for obj in list_to_download:
             new_bag = Bag.objects.create(
-                original_bag_name=downloaded_file,
+                original_bag_name=obj,
                 bag_identifier=str(uuid4()),
-                bag_path=downloaded_file,
-                process_status=Bag.DOWNLOADED)
+                process_status=Bag.SAVED)
             new_bag.save()
-        msg = "File downloaded." if list_to_download else "No files ready to be downloaded."
-        return msg, [downloaded_file] if list_to_download else []
+        msg = "Saved bags to database." if list_to_download else "No bags in bucket."
+        return msg, list_to_download if list_to_download else []
 
     def list_to_download(self):
         """Gets list of items to download from S3 bucket, and removes items which do no match criteria
@@ -49,40 +44,9 @@ class S3ObjectDownloader(object):
         for filename in files_in_bucket:
             if not expected_file_name(filename):
                 files_in_bucket.remove(filename)
-            elif Bag.objects.filter(original_bag_name=join(self.src_dir, filename)):
+            elif Bag.objects.filter(original_bag_name__contains=filename):
                 files_in_bucket.remove(filename)
         return files_in_bucket
-
-    def download_object_from_s3(self, filename):
-        """Downloads an object from S3 to the source directory
-
-        Args:
-            filename (str): filename which should be the S3 object key as well as the filename to download to
-
-        Returns:
-            downloaded_file (str): full path to downloaded file"""
-        downloaded_file = join(self.src_dir, filename)
-        try:
-            self.bucket.download_file(filename, downloaded_file)
-            return downloaded_file
-        except ClientError as e:
-            if e.response['Error']['Code'] == "404":
-                raise Exception("The object does not exist.")
-            else:
-                raise Exception("Error connecting to AWS: {}".format(e))
-
-    def delete_object_from_s3(self, filename):
-        """Deletes an object from an S3 bucket
-
-        Args:
-            filename (str): filename which should be the S3 object key
-
-        Returns:
-            downloaded_file (str): full path to downloaded file"""
-        try:
-            self.bucket.delete_objects(Delete={'Objects': [{'Key': filename}]})
-        except ClientError as e:
-            raise Exception("Error connecting to AWS: {}".format(e))
 
 
 class BaseRoutine(object):
@@ -127,6 +91,56 @@ class BaseRoutine(object):
 
     def process_bag(self, bag):
         raise NotImplementedError("You must implement a `process_bag` method")
+
+
+class S3ObjectDownloader(BaseRoutine):
+    start_process_status = Bag.SAVED
+    in_process_status = Bag.DOWNLOADING
+    end_process_status = Bag.DOWNLOADED
+    success_message = "File downloaded."
+    idle_message = "No files ready to be downloaded."
+
+    def __init__(self):
+        region_name, access_key, secret_key, bucket = settings.S3
+        s3 = boto3.resource(service_name='s3', region_name=region_name, aws_access_key_id=access_key, aws_secret_access_key=secret_key)
+        self.bucket = s3.Bucket(bucket)
+        self.src_dir = settings.SRC_DIR
+
+    def process_bag(self, bag):
+        downloaded_file = self.download_object_from_s3(bag.original_bag_name)
+        self.delete_object_from_s3(bag.original_bag_name)
+        bag.bag_path = downloaded_file
+
+    def download_object_from_s3(self, filename):
+        """Downloads an object from S3 to the source directory
+
+        Args:
+            filename (str): filename which should be the S3 object key as well as the filename to download to
+
+        Returns:
+            downloaded_file (str): full path to downloaded file"""
+        downloaded_file = join(self.src_dir, filename)
+        try:
+            self.bucket.download_file(filename, downloaded_file)
+            return downloaded_file
+        except ClientError as e:
+            if e.response['Error']['Code'] == "404":
+                raise Exception("The object does not exist.")
+            else:
+                raise Exception("Error connecting to AWS: {}".format(e))
+
+    def delete_object_from_s3(self, filename):
+        """Deletes an object from an S3 bucket
+
+        Args:
+            filename (str): filename which should be the S3 object key
+
+        Returns:
+            downloaded_file (str): full path to downloaded file"""
+        try:
+            self.bucket.delete_objects(Delete={'Objects': [{'Key': filename}]})
+        except ClientError as e:
+            raise Exception("Error connecting to AWS: {}".format(e))
 
 
 class BagDiscoverer(BaseRoutine):
