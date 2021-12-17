@@ -57,7 +57,7 @@ health-check==3.4.1
     # via -r requirements.in
 idna==3.3
     # via requests
-importlib-metadata==4.8.2
+importlib-metadata==4.8.3
     # via
     #   jsonschema
     #   moto
