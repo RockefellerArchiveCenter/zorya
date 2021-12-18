@@ -25,7 +25,6 @@ from .views import (BagDiscovererView, PackageArchiverView,
                     S3ObjectDownloaderView, S3ObjectFinderView)
 
 VALID_BAG_FIXTURE_DIR = join(settings.BASE_DIR, 'package_bag', 'fixtures', 'bags', 'valid')
-INVALID_BAG_FIXTURE_DIR = join(settings.BASE_DIR, 'package_bag', 'fixtures', 'bags', 'invalid')
 RIGHTS_FIXTURE_DIR = join(settings.BASE_DIR, 'package_bag', 'fixtures', 'rights')
 PACKAGES_FIXTURE_DIR = join(settings.BASE_DIR, 'package_bag', 'fixtures', 'packages')
 
@@ -160,6 +159,20 @@ class TestBagDiscoverer(TestCase):
         for d in [settings.TMP_DIR, settings.SRC_DIR]:
             if isdir(d):
                 shutil.rmtree(d)
+
+
+class TestBagDiscovererInvalid(TestCase):
+
+    @patch('package_bag.routines.BagDiscoverer.__init__')
+    @patch('package_bag.routines.BagDiscoverer.unpack_rename')
+    @patch('package_bag.routines.validate')
+    def test_invalid_bag(self, mock_init, mock_unpack, mock_validate):
+        mock_init.return_value = None
+        mock_unpack.return_value = "/path/to/bag.tar"
+        mock_validate.side_effect = Exception("message")
+        with self.assertRaises(Exception) as context:
+            BagDiscoverer().run()
+        self.assertEqual(str(context.exception), "message")
 
 
 class TestRightsAssigner(TestCase):
