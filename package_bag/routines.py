@@ -18,7 +18,7 @@ from zorya import settings
 from .models import Bag
 
 
-class S3ClientMixin:
+class S3ClientMixin(object):
     """Mixin to handle communication with S3."""
 
     def __init__(self):
