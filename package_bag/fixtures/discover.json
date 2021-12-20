@@ -1,0 +1,26 @@
+[
+    {
+        "model": "package_bag.bag",
+        "pk": 1,
+        "fields": {
+            "bag_identifier": "ae50bc3d-cf6f-4af8-a516-0e8af7334fcf",
+            "bag_path": "/src_dir/bd_bag.tar.gz",
+            "process_status": 15,
+            "original_bag_name": "/src_dir/bd_bag.tar.gz",
+            "created": "2021-11-04T17:42:58.267Z",
+            "last_modified": "2021-11-04T17:42:58.267Z"
+        }
+    },
+    {
+        "model": "package_bag.bag",
+        "pk": 2,
+        "fields": {
+            "bag_identifier": "a51025b3-c033-418c-ab90-3a4f544424d3",
+            "bag_path": "/src_dir/digitization_bag.tar.gz",
+            "process_status": 15,
+            "original_bag_name": "/src_dir/digitization_bag.tar.gz",
+            "created": "2021-11-04T17:42:58.272Z",
+            "last_modified": "2021-11-04T17:42:58.272Z"
+        }
+    }
+]

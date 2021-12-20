@@ -13,6 +13,10 @@ class Bag(BasePackage):
     PACKAGING = 12
     DELIVERING = 13
     ARCHIVING = 14
+    DOWNLOADED = 15
+    DISCOVERING = 16
+    SAVED = 17
+    DOWNLOADING = 18
     PROCESS_STATUS_CHOICES = (
         (DISCOVERED, "Discovered"),
         (ASSIGNED_RIGHTS, "Assigned rights"),
@@ -23,6 +27,10 @@ class Bag(BasePackage):
         (PACKAGING, "Creating package"),
         (DELIVERING, "Delivering"),
         (ARCHIVING, "Creating archive"),
+        (DOWNLOADED, "Downloaded object from S3"),
+        (DISCOVERING, "Discovering"),
+        (SAVED, "Saved to database"),
+        (DOWNLOADING, "Downloaded object from S3")
     )
     process_status = models.IntegerField(choices=PROCESS_STATUS_CHOICES, default=DISCOVERED)
     original_bag_name = models.CharField(max_length=255)
