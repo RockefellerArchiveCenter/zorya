@@ -18,11 +18,16 @@ from zorya import settings
 from .models import Bag
 
 
-class S3ObjectFinder(object):
+class S3ClientMixin:
+    """Mixin to handle communication with S3."""
+
     def __init__(self):
         region_name, access_key, secret_key, bucket = settings.S3
         s3 = boto3.resource(service_name='s3', region_name=region_name, aws_access_key_id=access_key, aws_secret_access_key=secret_key)
         self.bucket = s3.Bucket(bucket)
+
+
+class S3ObjectFinder(S3ClientMixin):
 
     def run(self):
         list_to_download = self.list_to_download()
@@ -93,7 +98,7 @@ class BaseRoutine(object):
         raise NotImplementedError("You must implement a `process_bag` method")
 
 
-class S3ObjectDownloader(BaseRoutine):
+class S3ObjectDownloader(BaseRoutine, S3ClientMixin):
     start_process_status = Bag.SAVED
     in_process_status = Bag.DOWNLOADING
     end_process_status = Bag.DOWNLOADED
@@ -101,9 +106,7 @@ class S3ObjectDownloader(BaseRoutine):
     idle_message = "No files ready to be downloaded."
 
     def __init__(self):
-        region_name, access_key, secret_key, bucket = settings.S3
-        s3 = boto3.resource(service_name='s3', region_name=region_name, aws_access_key_id=access_key, aws_secret_access_key=secret_key)
-        self.bucket = s3.Bucket(bucket)
+        super().__init__()
         self.src_dir = settings.SRC_DIR
 
     def process_bag(self, bag):
