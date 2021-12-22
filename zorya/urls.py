@@ -19,13 +19,14 @@ from django.urls import include, path
 from package_bag.views import (BagDiscovererView, BagViewSet,
                                PackageArchiverView, PackageDelivererView,
                                PackageMakerView, RightsAssignerView,
-                               S3ObjectDownloaderView)
+                               S3ObjectDownloaderView, S3ObjectFinderView)
 from rest_framework import routers
 
 router = routers.DefaultRouter()
 router.register(r'bags', BagViewSet, 'bag')
 
 urlpatterns = [
+    path('find-objects/', S3ObjectFinderView.as_view(), name="s3objectfinder"),
     path('download-objects/', S3ObjectDownloaderView.as_view(), name="s3objectdownloader"),
     path('discover-bags/', BagDiscovererView.as_view(), name="bagdiscoverer"),
     path('assign-rights/', RightsAssignerView.as_view(), name="rightsassigner"),

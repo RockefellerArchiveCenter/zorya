@@ -1,0 +1,40 @@
+[
+    {
+        "model": "package_bag.bag",
+        "pk": 1,
+        "fields": {
+            "bag_identifier": "ae50bc3d-cf6f-4af8-a516-0e8af7334fcf",
+            "bag_path": "/tmp_dir/ae50bc3d-cf6f-4af8-a516-0e8af7334fcf",
+            "type": null,
+            "data": null,
+            "process_status": 1,
+            "original_bag_name": "/src_dir/4b1bf39c6b6745408ac8de9a5aec34ba.tar",
+            "origin": "digitization",
+            "rights_id": "1 2 3",
+            "start_date": null,
+            "end_date": "2021-11-04",
+            "rights_data": null,
+            "created": "2021-11-04T17:42:58.267Z",
+            "last_modified": "2021-11-04T17:42:58.267Z"
+        }
+    },
+    {
+        "model": "package_bag.bag",
+        "pk": 2,
+        "fields": {
+            "bag_identifier": "a51025b3-c033-418c-ab90-3a4f544424d3",
+            "bag_path": "/tmp_dir/a51025b3-c033-418c-ab90-3a4f544424d3",
+            "type": null,
+            "data": null,
+            "process_status": 1,
+            "original_bag_name": "329d56f6f0424bfb8551d148a125dabb.tar",
+            "origin": "digitization",
+            "rights_id": "1 2 3",
+            "start_date": null,
+            "end_date": "2021-11-04",
+            "rights_data": null,
+            "created": "2021-11-04T17:42:58.272Z",
+            "last_modified": "2021-11-04T17:42:58.272Z"
+        }
+    }
+]
