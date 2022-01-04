@@ -49,7 +49,7 @@ class S3ObjectFinder(S3ClientMixin):
         for filename in files_in_bucket:
             if not expected_file_name(filename):
                 files_in_bucket.remove(filename)
-            elif Bag.objects.filter(original_bag_name__contains=filename):
+            elif Bag.objects.filter(original_bag_name__contains=filename).exists():
                 files_in_bucket.remove(filename)
         return files_in_bucket
 
