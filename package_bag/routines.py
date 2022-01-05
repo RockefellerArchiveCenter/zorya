@@ -49,7 +49,7 @@ class S3ObjectFinder(S3ClientMixin):
         for filename in files_in_bucket:
             if not expected_file_name(filename):
                 files_in_bucket.remove(filename)
-            elif Bag.objects.filter(original_bag_name__contains=filename):
+            elif Bag.objects.filter(original_bag_name__contains=filename).exists():
                 files_in_bucket.remove(filename)
         return files_in_bucket
 
@@ -89,9 +89,9 @@ class BaseRoutine(object):
                 msg = self.success_message
             else:
                 msg = self.idle_message
-                bag = None
         else:
             msg = "Service currently running"
+            bag = None
         return msg, [bag.bag_identifier] if bag else []
 
     def process_bag(self, bag):
