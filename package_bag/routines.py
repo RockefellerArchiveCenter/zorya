@@ -46,12 +46,7 @@ class S3ObjectFinder(S3ClientMixin):
         Returns:
             List of filenames (strings)"""
         files_in_bucket = [bucket_object.key for bucket_object in self.bucket.objects.all()]
-        for filename in files_in_bucket:
-            if not expected_file_name(filename):
-                files_in_bucket.remove(filename)
-            elif Bag.objects.filter(original_bag_name__contains=filename).exists():
-                files_in_bucket.remove(filename)
-        return files_in_bucket
+        return [filename for filename in files_in_bucket if expected_file_name(filename) and not Bag.objects.filter(original_bag_name__contains=filename).exists()]
 
 
 class BaseRoutine(object):

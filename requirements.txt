@@ -21,7 +21,7 @@ boto3==1.20.52
     # via
     #   -r requirements.in
     #   moto
-botocore==1.23.52
+botocore==1.23.54
     # via
     #   boto3
     #   moto
@@ -40,7 +40,7 @@ cryptography==36.0.1
     # via moto
 dataclasses==0.8
     # via werkzeug
-django==3.2.11
+django==3.2.12
     # via
     #   -r requirements.in
     #   asterism
