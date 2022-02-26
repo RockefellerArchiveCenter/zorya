@@ -10,9 +10,10 @@ import boto3
 from asterism.bagit_helpers import validate
 from asterism.file_helpers import make_tarfile
 from botocore.exceptions import ClientError
+from requests import post
+
 from package_bag.helpers import expected_file_name
 from package_bag.serializers import BagSerializer
-from requests import post
 from zorya import settings
 
 from .models import Bag
