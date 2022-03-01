@@ -6,4 +6,4 @@ Django==3.2.12
 djangorestframework==3.13.1
 moto==3.0.3
 health-check==3.4.1
-rac_schemas==0.29
+rac_schemas==0.30
