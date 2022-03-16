@@ -9,9 +9,10 @@ import boto3
 from django.test import TestCase
 from django.urls import reverse
 from moto import mock_s3
-from package_bag.helpers import expected_file_name
 from rac_schemas import is_valid
 from rest_framework.test import APIRequestFactory
+
+from package_bag.helpers import expected_file_name
 from zorya import settings
 
 from .models import Bag
@@ -333,5 +334,5 @@ class TestViews(TestCase):
                 response.status_code, 200, f"View error: {response.data} in {view}")
 
     def test_health_check_view(self):
-        status = self.client.get(reverse('api_health_ping'))
+        status = self.client.get(reverse('ping'))
         self.assertEqual(status.status_code, 200, "Wrong HTTP code")

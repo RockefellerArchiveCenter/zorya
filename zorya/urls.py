@@ -13,14 +13,15 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.conf.urls import url
+from asterism.views import PingView
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
+from rest_framework import routers
+
 from package_bag.views import (BagDiscovererView, BagViewSet,
                                PackageArchiverView, PackageDelivererView,
                                PackageMakerView, RightsAssignerView,
                                S3ObjectDownloaderView, S3ObjectFinderView)
-from rest_framework import routers
 
 router = routers.DefaultRouter()
 router.register(r'bags', BagViewSet, 'bag')
@@ -35,5 +36,5 @@ urlpatterns = [
     path('deliver-package/', PackageDelivererView.as_view(), name="packagedeliverer"),
     path('admin/', admin.site.urls),
     path('', include(router.urls)),
-    url('status/', include('health_check.api.urls')),
+    re_path('status/', PingView.as_view(), name="ping"),
 ]

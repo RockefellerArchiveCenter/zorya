@@ -41,7 +41,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'package_bag',
     'rest_framework',
-    'health_check',
 ]
 
 MIDDLEWARE = [
