@@ -171,7 +171,7 @@ class BagDiscoverer(BaseRoutine):
         """Unpacks tarfile to a new directory with the name of the bag identifier (a UUID)"""
         tf = tarfile.open(bag.bag_path, 'r')
         tf.extractall(self.tmp_dir)
-        original_bag_name = tf.getnames()[0]
+        original_bag_name = tf.getnames()[0].split('/')[0]
         tf.close()
         rename(join(self.tmp_dir, original_bag_name),
                join(self.tmp_dir, bag.bag_identifier))
