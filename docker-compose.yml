@@ -2,7 +2,7 @@ version: '3'
 
 services:
   zorya-db:
-    image: postgres:10.4
+    image: postgres:14.4
     volumes:
       - zoryadb:/var/lib/postgresql/data/
   zorya-web:
