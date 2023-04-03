@@ -6,7 +6,7 @@
 #
 asgiref==3.6.0
     # via django
-asterism==0.9.0
+asterism==1.0.0
     # via -r requirements.in
 attrs==22.2.0
     # via jsonschema
@@ -17,11 +17,11 @@ bagit==1.8.1
     #   bagit-profile
 bagit-profile==1.3.1
     # via -r requirements.in
-boto3==1.26.81
+boto3==1.26.105
     # via
     #   -r requirements.in
     #   moto
-botocore==1.29.81
+botocore==1.29.105
     # via
     #   boto3
     #   moto
@@ -30,11 +30,11 @@ certifi==2022.12.7
     # via requests
 cffi==1.15.1
     # via cryptography
-charset-normalizer==3.0.1
+charset-normalizer==3.1.0
     # via requests
-cryptography==39.0.1
+cryptography==40.0.1
     # via moto
-django==4.1.7
+django==4.2
     # via
     #   -r requirements.in
     #   asterism
@@ -59,10 +59,8 @@ markupsafe==2.1.2
     #   moto
 moto==3.1.18
     # via -r requirements.in
-odin==2.4
-    # via asterism
-psycopg2-binary==2.9.5
-    # via asterism
+psycopg2==2.9.6
+    # via -r requirements.in
 pycparser==2.21
     # via cffi
 pyrsistent==0.19.3
@@ -71,10 +69,12 @@ python-dateutil==2.8.2
     # via
     #   botocore
     #   moto
-pytz==2022.7.1
+pytz==2023.3
     # via
     #   djangorestframework
     #   moto
+pyyaml==6.0
+    # via responses
 rac-schemas==0.30
     # via -r requirements.in
 requests==2.28.2
@@ -82,7 +82,7 @@ requests==2.28.2
     #   bagit-profile
     #   moto
     #   responses
-responses==0.22.0
+responses==0.23.1
     # via moto
 s3transfer==0.6.0
     # via boto3
@@ -90,11 +90,9 @@ six==1.16.0
     # via python-dateutil
 sqlparse==0.4.3
     # via django
-toml==0.10.2
+types-pyyaml==6.0.12.9
     # via responses
-types-toml==0.10.8.5
-    # via responses
-urllib3==1.26.14
+urllib3==1.26.15
     # via
     #   botocore
     #   requests
