@@ -23,7 +23,8 @@
         "required":true,
         "values":[
           "legacy_digital",
-          "digitization"
+          "digitization",
+          "av_digitization"
         ],
         "repeatable":false
       },
