@@ -5,22 +5,26 @@ zorya is part of [Project Electron](https://github.com/RockefellerArchiveCenter/
 
 ## Setup
 
-Install [git](https://git-scm.com/) and clone the repository
+Install [git](https://git-scm.com/) and clone the repository:
 
     $ git clone https://github.com/RockefellerArchiveCenter/zorya.git
 
-Install [Docker](https://store.docker.com/search?type=edition&offering=community) and run docker-compose from the root directory
+Copy the example config file so zorya can find it. Once this is copied you can make changes to values as necesary:
+
+    $ cp zorya/zorya/config.py.example zorya/zorya/config.py
+
+Install [Docker](https://store.docker.com/search?type=edition&offering=community) and run docker-compose from the root directory:
 
     $ cd zorya
     $ docker-compose up
 
 Once the application starts successfully, you should be able to access the application in your browser at `http://localhost:8011`
 
-When you're done, shut down docker-compose
+When you're done, shut down docker-compose:
 
     $ docker-compose down
 
-Or, if you want to remove all data
+Or, if you want to remove all data:
 
     $ docker-compose down -v
 
