@@ -8,8 +8,6 @@ asgiref==3.6.0
     # via django
 asterism==1.0.0
     # via -r requirements.in
-attrs==23.1.0
-    # via jsonschema
 bagit==1.8.1
     # via
     #   -r requirements.in
@@ -51,8 +49,6 @@ jmespath==1.0.1
     # via
     #   boto3
     #   botocore
-jsonschema==4.17.3
-    # via rac-schemas
 markupsafe==2.1.2
     # via
     #   jinja2
@@ -63,8 +59,6 @@ psycopg2==2.9.6
     # via -r requirements.in
 pycparser==2.21
     # via cffi
-pyrsistent==0.19.3
-    # via jsonschema
 python-dateutil==2.8.2
     # via
     #   botocore
@@ -75,8 +69,6 @@ pytz==2023.3
     #   moto
 pyyaml==6.0
     # via responses
-rac-schemas==0.30
-    # via -r requirements.in
 requests==2.29.0
     # via
     #   bagit-profile
