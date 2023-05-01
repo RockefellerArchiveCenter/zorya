@@ -6,4 +6,3 @@ Django~=4.1
 djangorestframework~=3.13
 moto~=3.1
 psycopg2~=2.9
-rac_schemas==0.30
