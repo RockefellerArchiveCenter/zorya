@@ -15,11 +15,11 @@ bagit==1.8.1
     #   bagit-profile
 bagit-profile==1.3.1
     # via -r requirements.in
-boto3==1.34.11
+boto3==1.34.32
     # via
     #   -r requirements.in
     #   moto
-botocore==1.34.11
+botocore==1.34.32
     # via
     #   boto3
     #   moto
@@ -30,9 +30,9 @@ cffi==1.16.0
     # via cryptography
 charset-normalizer==3.3.2
     # via requests
-cryptography==41.0.7
+cryptography==42.0.2
     # via moto
-django==4.2.8
+django==4.2.9
     # via
     #   -r requirements.in
     #   asterism
@@ -43,13 +43,13 @@ djangorestframework==3.14.0
     #   asterism
 idna==3.6
     # via requests
-jinja2==3.1.2
+jinja2==3.1.3
     # via moto
 jmespath==1.0.1
     # via
     #   boto3
     #   botocore
-markupsafe==2.1.3
+markupsafe==2.1.4
     # via
     #   jinja2
     #   moto
@@ -63,7 +63,7 @@ python-dateutil==2.8.2
     # via
     #   botocore
     #   moto
-pytz==2023.3.post1
+pytz==2023.4
     # via
     #   djangorestframework
     #   moto
