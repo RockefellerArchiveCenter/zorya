@@ -15,24 +15,24 @@ bagit==1.8.1
     #   bagit-profile
 bagit-profile==1.3.1
     # via -r requirements.in
-boto3==1.34.136
+boto3==1.34.151
     # via
     #   -r requirements.in
     #   moto
-botocore==1.34.136
+botocore==1.34.151
     # via
     #   boto3
     #   moto
     #   s3transfer
-certifi==2024.6.2
+certifi==2024.7.4
     # via requests
 cffi==1.16.0
     # via cryptography
 charset-normalizer==3.3.2
     # via requests
-cryptography==42.0.8
+cryptography==43.0.0
     # via moto
-django==4.2.13
+django==4.2.14
     # via
     #   -r requirements.in
     #   asterism
@@ -78,7 +78,7 @@ s3transfer==0.10.2
     # via boto3
 six==1.16.0
     # via python-dateutil
-sqlparse==0.5.0
+sqlparse==0.5.1
     # via django
 typing-extensions==4.12.2
     # via asgiref
