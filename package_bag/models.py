@@ -38,6 +38,7 @@ class Bag(BasePackage):
         ('legacy_digital', 'Legacy Digital Processing'),
         ('digitization', 'Digitization')
     )
+    title = models.CharField(max_length=255, null=True, blank=True)
     origin = models.CharField(
         max_length=20,
         choices=ORIGIN_CHOICES,

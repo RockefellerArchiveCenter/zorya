@@ -11,4 +11,4 @@ class BagSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Bag
-        fields = ("identifier", "origin", "rights_statements")
+        fields = ("identifier", "title", "origin", "rights_statements")
