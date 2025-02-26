@@ -28,6 +28,21 @@ VALID_BAG_FIXTURE_DIR = join(settings.BASE_DIR, 'package_bag', 'fixtures', 'bags
 RIGHTS_FIXTURE_DIR = join(settings.BASE_DIR, 'package_bag', 'fixtures', 'rights')
 PACKAGES_FIXTURE_DIR = join(settings.BASE_DIR, 'package_bag', 'fixtures', 'packages')
 
+class MockResponse(object):
+    """Class used to mock HTTP responses"""
+
+    def __init__(self, json_data, status_code, **kwargs):
+        """Sets data, status code, and any other data passed in."""
+        self.json_data = json_data
+        self.status_code = status_code
+        self.text = "v4.0.0"
+        for k in kwargs:
+            setattr(self, k, kwargs[k])
+
+    def json(self):
+        """Mocks the json method of an HTTP response"""
+        return self.json_data
+
 
 class TestHelpers(TestCase):
 
@@ -141,8 +156,13 @@ class TestBagDiscoverer(TestCase):
     def setUp(self):
         set_up_directories([settings.TMP_DIR, settings.SRC_DIR])
 
-    def test_run(self):
+    @patch('asnake.client.ASnakeClient.authorize')
+    @patch('asnake.client.ASnakeClient.get')
+    def test_run(self, mock_get, mock_auth):
         """Ensures that bags are correctly discovered."""
+        mock_auth.return_value = "token"
+        as_data = {"display_string": "foobar"}
+        mock_get.return_value = MockResponse(as_data, 200)
         valid_bags = len([i for i in listdir(VALID_BAG_FIXTURE_DIR)])
         shutil.rmtree(settings.SRC_DIR)
         shutil.copytree(VALID_BAG_FIXTURE_DIR, settings.SRC_DIR)
@@ -154,6 +174,11 @@ class TestBagDiscoverer(TestCase):
         self.assertTupleEqual(discover, ('No bags were found.', []), "Incorrect response when no bags are found.")
         self.assertEqual(len(Bag.objects.all()), valid_bags, "Wrong number of bags saved in database.")
         self.assertEqual(len(listdir(settings.TMP_DIR)), valid_bags)
+        for bag in Bag.objects.all():
+            self.assertEqual(bag.title, "foobar")
+        
+        self.assertEqual(mock_auth.call_count, count)
+        self.assertEqual(mock_get.call_count, count + 2)
 
     def tearDown(self):
         for d in [settings.TMP_DIR, settings.SRC_DIR]:
@@ -219,7 +244,8 @@ class TestRightsAssigner(TestCase):
             package_root = join(settings.DEST_DIR, bag.bag_identifier)
             PackageMaker().serialize_json(bag, package_root)
             with open("{}.json".format(join(package_root, bag.bag_identifier)), "r") as f:
-                self.assertTrue(json.load(f))
+                data = json.load(f)
+                self.assertIsNotNone(data['title'])
 
     def tearDown(self):
         for d in [settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR]:
@@ -318,8 +344,13 @@ class TestViews(TestCase):
         self.factory = APIRequestFactory()
         set_up_directories([settings.TMP_DIR, settings.SRC_DIR, settings.DEST_DIR])
 
-    def test_routine_views(self):
+    @patch('asnake.client.ASnakeClient.authorize')
+    @patch('asnake.client.ASnakeClient.get')
+    def test_routine_views(self, mock_get, mock_auth):
         """S3ObjectDownloaderView is tested in the TestS3Download test case, due to the overlap of AWS setup work with the S3ObjectDownloader routine"""
+        mock_auth.return_value = "token"
+        as_data = {"display_string": "foobar"}
+        mock_get.return_value = MockResponse(as_data, 200)
         for view_str, view in [
                 ("bagdiscoverer", BagDiscovererView),
                 ("rightsassigner", RightsAssignerView),
