@@ -28,6 +28,7 @@ VALID_BAG_FIXTURE_DIR = join(settings.BASE_DIR, 'package_bag', 'fixtures', 'bags
 RIGHTS_FIXTURE_DIR = join(settings.BASE_DIR, 'package_bag', 'fixtures', 'rights')
 PACKAGES_FIXTURE_DIR = join(settings.BASE_DIR, 'package_bag', 'fixtures', 'packages')
 
+
 class MockResponse(object):
     """Class used to mock HTTP responses"""
 
@@ -176,7 +177,7 @@ class TestBagDiscoverer(TestCase):
         self.assertEqual(len(listdir(settings.TMP_DIR)), valid_bags)
         for bag in Bag.objects.all():
             self.assertEqual(bag.title, "foobar")
-        
+
         self.assertEqual(mock_auth.call_count, count)
         self.assertEqual(mock_get.call_count, count + 2)
 
