@@ -145,10 +145,3 @@ DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # region_name, access_key, secret_key, bucket
 S3 = (CF.AWS_REGION_NAME, CF.AWS_ACCESS_KEY, CF.AWS_SECRET_KEY, CF.AWS_BUCKET_NAME)
-
-# ArchivesSpace configurations
-ARCHIVESSPACE = {
-    "baseurl": CF.AS_BASEURL,
-    "username": CF.AS_USERNAME,
-    "password": CF.AS_PASSWORD,
-}

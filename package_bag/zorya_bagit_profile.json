@@ -32,6 +32,10 @@
         "required":true,
         "repeatable":true
       },
+      "Title":{
+         "required":true,
+         "repeatable":false
+      },
       "Bagging-Date":{
          "required":true,
          "repeatable":false
