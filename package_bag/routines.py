@@ -7,7 +7,6 @@ from uuid import uuid4
 import bagit
 import bagit_profile
 import boto3
-from asnake.aspace import ASpace
 from asterism.bagit_helpers import validate
 from asterism.file_helpers import make_tarfile
 from botocore.exceptions import ClientError
@@ -159,16 +158,14 @@ class BagDiscoverer(BaseRoutine):
         for dir in [self.src_dir, self.tmp_dir]:
             if not isdir(dir):
                 raise Exception("Directory does not exist", dir)
-        self.aspace = ASpace(**settings.ARCHIVESSPACE)
 
     def process_bag(self, bag):
         bag.bag_path = self.unpack_rename(bag)
         bag.save()
         validate(bag.bag_path)
         bag_data = self.validate_metadata(bag)
-        for key in ["Origin", "Rights-ID", "Start-Date", "End-Date"]:
+        for key in ["Origin", "Rights-ID", "Start-Date", "End-Date", "Title"]:
             setattr(bag, key.lower().replace("-", "_"), bag_data.get(key))
-        bag.title = self.aspace.client.get(bag_data['ArchivesSpace-URI']).json()['display_string']
 
     def unpack_rename(self, bag):
         """Unpacks tarfile to a new directory with the name of the bag identifier (a UUID)"""
