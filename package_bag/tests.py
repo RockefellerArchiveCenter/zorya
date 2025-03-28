@@ -18,8 +18,7 @@ from .models import Bag
 from .routines import (BagDiscoverer, PackageArchiver, PackageDeliverer,
                        PackageMaker, RightsAssigner, S3ObjectDownloader,
                        S3ObjectFinder)
-from .test_helpers import (END_DATE, RIGHTS_ID, copy_binaries,
-                           set_up_directories)
+from .test_helpers import END_DATE, copy_binaries, set_up_directories
 from .views import (BagDiscovererView, PackageArchiverView,
                     PackageDelivererView, PackageMakerView, RightsAssignerView,
                     S3ObjectDownloaderView, S3ObjectFinderView)
@@ -195,7 +194,7 @@ class TestRightsAssigner(TestCase):
             assign_rights = RightsAssigner().run()
             mock_rights.assert_called_with(
                 settings.RIGHTS_URL,
-                json={'identifiers': RIGHTS_ID, 'start_date': None, 'end_date': END_DATE})
+                json={'identifiers': ['10'], 'start_date': None, 'end_date': END_DATE})
             self.assertIsNot(False, assign_rights)
         self.assertEqual(
             mock_rights.call_count, self.records_in_db,
