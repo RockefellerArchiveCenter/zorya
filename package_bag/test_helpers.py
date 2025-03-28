@@ -7,7 +7,6 @@ from uuid import uuid4
 
 from .models import Bag
 
-RIGHTS_ID = "1 2 3"
 END_DATE = "2021-11-04"
 
 
