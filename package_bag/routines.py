@@ -205,10 +205,11 @@ class RightsAssigner(BaseRoutine):
 
     def retrieve_rights(self, bag):
         """Sends POST request to rights statement service, receives JSON in return"""
+        rights_ids = [bag.rights_id] if isinstance(bag.rights_id, str) else bag.rights_id
         url = settings.RIGHTS_URL
         resp = post(
             url,
-            json={"identifiers": bag.rights_id, "start_date": bag.start_date, "end_date": bag.end_date}
+            json={"identifiers": rights_ids, "start_date": bag.start_date, "end_date": bag.end_date}
         )
         if resp.status_code != 200:
             raise Exception("Error sending request to {}: {} {}".format(url, resp.status_code, resp.reason))
