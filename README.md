@@ -1,3 +1,5 @@
+**This application has been marked as read-only and is no longer actively maintained or supported. Application functionality has been reimplemented in the [digitized_av_packaging](https://github.com/RockefellerArchiveCenter/digitized_av_packaging) and [digitized_image_packaging](https://github.com/RockefellerArchiveCenter/digitized_image_packaging) applications.**
+
 # zorya
 A microservice to package bags.
 
